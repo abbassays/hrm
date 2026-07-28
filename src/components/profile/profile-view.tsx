@@ -13,6 +13,7 @@ import { BankInfoDialog } from '@/components/profile/bank-info-dialog';
 import { ContactInfoDialog } from '@/components/profile/contact-info-dialog';
 import { EmploymentReadonly } from '@/components/profile/employment-readonly';
 import { PersonalInfoDialog } from '@/components/profile/personal-info-dialog';
+import { ProfilePhotoCard } from '@/components/profile/profile-photo-card';
 import { SocialsInfoDialog } from '@/components/profile/socials-info-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -77,6 +78,13 @@ export function ProfileView({
       >
         <StatusBadge status={employee.status} />
       </PageHeader>
+
+      {showDocuments && (
+        <ProfilePhotoCard
+          employeeId={employee.id}
+          fullName={employee.fullName || employee.email}
+        />
+      )}
 
       <InfoCard
         title='Contact Information'

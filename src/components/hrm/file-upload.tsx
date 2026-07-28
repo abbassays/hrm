@@ -21,6 +21,8 @@ type FileUploadProps = {
   /** Overrides the default "Up to N files, XMB each" helper line. */
   hint?: string;
   label?: string;
+  disabled?: boolean;
+  isLoading?: boolean;
 };
 
 export function FileUpload({
@@ -32,8 +34,11 @@ export function FileUpload({
   allowedMimeTypes,
   hint,
   label = 'Upload files',
+  disabled = false,
+  isLoading = false,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const isBusy = disabled || isLoading;
 
   const isAllowedType = (file: File) => {
     if (!allowedMimeTypes?.length) return true;
@@ -41,7 +46,10 @@ export function FileUpload({
     // Some browsers report an empty MIME type — fall back to the extension,
     // matched against the subtype of each allowed MIME (png, pdf, …).
     const ext = file.name.split('.').pop()?.toLowerCase();
-    return allowedMimeTypes.some((type) => type.split('/')[1] === ext);
+    return allowedMimeTypes.some((type) => {
+      const subtype = type.split('/')[1];
+      return subtype === ext || (subtype === 'jpeg' && ext === 'jpg');
+    });
   };
 
   const handleSelect = (selected: FileList | null) => {
@@ -95,6 +103,7 @@ export function FileUpload({
         type='file'
         multiple
         accept={accept}
+        disabled={isBusy}
         className='sr-only'
         onChange={(e) => {
           handleSelect(e.target.files);
@@ -106,7 +115,8 @@ export function FileUpload({
         variant='outline'
         iconLeft={Upload}
         onClick={() => inputRef.current?.click()}
-        disabled={value.length >= maxFiles}
+        disabled={isBusy || value.length >= maxFiles}
+        isLoading={isLoading}
       >
         {label}
       </Button>
@@ -135,6 +145,7 @@ export function FileUpload({
                 className='size-7'
                 aria-label={`Remove ${file.name}`}
                 onClick={() => removeAt(index)}
+                disabled={isBusy}
               >
                 <X className='size-4' aria-hidden />
               </Button>
