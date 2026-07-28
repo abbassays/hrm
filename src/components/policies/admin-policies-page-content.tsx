@@ -1,7 +1,7 @@
 'use client';
 
 import { format } from 'date-fns';
-import { FileText } from 'lucide-react';
+import { FileText, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -56,7 +56,9 @@ export function AdminPoliciesPageContent() {
 
         <TabsContent value='documents' className='flex flex-col gap-4'>
           <div className='flex justify-end gap-2'>
-            <Button onClick={() => setCreateOpen(true)}>New Policy</Button>
+            <Button iconLeft={Plus} onClick={() => setCreateOpen(true)}>
+              New Policy
+            </Button>
           </div>
           {isLoading ? (
             <Skeleton className='h-64 rounded-xl' />

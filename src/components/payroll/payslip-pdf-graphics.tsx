@@ -1,4 +1,5 @@
 import { Circle, G, Line, Path, Polygon, Svg } from '@react-pdf/renderer';
+import React from 'react';
 
 import {
   bitsmithsLogoPaths,

@@ -2,12 +2,19 @@ import {
   Document,
   Link as PdfLink,
   Page,
-  Path,
   StyleSheet,
-  Svg,
   Text,
   View,
 } from '@react-pdf/renderer';
+import React from 'react';
+
+import {
+  BitsmithsMark,
+  BottomBar,
+  ContactIcon,
+  TopBar,
+} from '@/components/payroll/payslip-pdf-graphics';
+import { payslipPdfStyles as payslipStyles } from '@/components/payroll/payslip-pdf-styles';
 
 import {
   payslipPdfColors as c,
@@ -17,137 +24,71 @@ import {
 
 import { Policy, PolicyVersion } from '@/types/hrm';
 
+// Policy PDFs share the payslip footer treatment but do not include its
+// signature block, so they reserve only the space the compact contact footer
+// actually occupies. The page number sits immediately above its top rule.
+const policyFooterHeight =
+  metrics.barHeight +
+  metrics.wedgeDrop +
+  metrics.footerPadY * 2 +
+  metrics.footerTextSize * metrics.footerLineHeight * 2 +
+  1;
+const policyFooterReserve = Math.ceil(policyFooterHeight) + 12;
+
 const styles = StyleSheet.create({
   page: {
     paddingTop: 0,
-    paddingBottom: metrics.footerReserve,
+    paddingBottom: policyFooterReserve,
     fontSize: 9,
     fontFamily: 'Helvetica',
     color: c.textBody,
   },
-
-  masthead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: metrics.pageX,
-    paddingTop: 26,
-  },
-  markWrap: { marginRight: 22 },
-  lockup: { flexDirection: 'column', alignItems: 'flex-end' },
-  companyName: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 26,
-    letterSpacing: 0.2,
-    color: c.textStrong,
-  },
-  docTitle: {
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 20,
-    letterSpacing: 0.2,
-    color: c.brandGreen,
-    marginTop: 2,
-  },
-  mastheadRule: {
-    marginHorizontal: metrics.pageX,
-    marginTop: 22,
-    borderBottomWidth: 1,
-    borderBottomColor: c.ruleStrong,
-  },
-
-  headerMeta: {
-    marginHorizontal: metrics.pageX,
-    marginTop: 12,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    backgroundColor: c.metaTint,
-    borderLeftWidth: 2,
-    borderLeftColor: c.brandGreen,
-  },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap' },
-  metaCell: { width: '50%', paddingRight: 16, marginBottom: 7 },
-  metaLabel: {
-    fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
-    letterSpacing: 0.5,
-    color: c.textMuted,
-    marginBottom: 3,
-  },
-  metaValue: {
-    fontSize: 10,
-    color: c.textStrong,
-    fontFamily: 'Helvetica-Bold',
-  },
-
-  body: { paddingHorizontal: metrics.pageX, paddingTop: 12 },
-  title: {
+  body: { paddingHorizontal: metrics.pageX, paddingTop: 10 },
+  documentTitle: {
     fontSize: 14,
-    fontWeight: 700,
+    fontFamily: 'Helvetica-Bold',
     color: c.textStrong,
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  mainHeadingRule: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: c.brandGreen,
     marginBottom: 8,
   },
-  sectionRule: {
-    borderBottomWidth: 0.75,
-    borderBottomColor: c.hairline,
-    marginBottom: 10,
+  h2Block: { marginTop: 11, marginBottom: 6 },
+  h3Block: { marginTop: 9, marginBottom: 5 },
+  h2: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: 0.45,
+    color: c.textStrong,
   },
-
-  h2: { fontSize: 11, fontWeight: 700, marginTop: 12, marginBottom: 6, color: c.textStrong },
-  h3: { fontSize: 10, fontWeight: 700, marginTop: 10, marginBottom: 4, color: c.textStrong },
-  p: { marginBottom: 7, lineHeight: 1.45, color: c.textBody },
-  list: { marginBottom: 7 },
-  listItem: { flexDirection: 'row', marginBottom: 3 },
-  bullet: { width: 16, color: c.textMuted },
-  listText: { flex: 1, lineHeight: 1.45, color: c.textBody },
+  h3: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+    color: c.textStrong,
+  },
+  headingRule: {
+    borderBottomWidth: 1.25,
+    borderBottomColor: c.brandGreen,
+    marginTop: 4,
+  },
+  p: { marginBottom: 3, lineHeight: 1.15, color: c.textBody },
+  list: { marginBottom: 3 },
+  listItem: { flexDirection: 'row', marginBottom: 0 },
+  bullet: { width: 14, color: c.textMuted, lineHeight: 1.15 },
+  listText: { flex: 1, lineHeight: 1.15, color: c.textBody },
   link: { color: c.brandGreenDeep, textDecoration: 'underline' },
-
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: c.metaTint,
-    paddingVertical: 14,
-  },
-  footerRule: {
-    marginHorizontal: metrics.pageX,
-    borderBottomWidth: 0.75,
-    borderBottomColor: c.hairline,
-  },
-  footerInner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: metrics.pageX,
-    gap: 18,
-    paddingTop: 12,
-  },
-  footerItem: { flex: 1, minWidth: 120 },
-  footerText: { fontSize: 9, color: c.textMuted, lineHeight: 1.4 },
-  footerStrong: { fontSize: 9, color: c.textStrong, fontFamily: 'Helvetica-Bold', lineHeight: 1.4 },
-
+  watermark: { position: 'absolute', top: 300, left: 250 },
   pageNumber: {
     position: 'absolute',
-    bottom: 34,
+    bottom: Math.ceil(policyFooterHeight) + 8,
     right: metrics.pageX,
     fontSize: 8,
     color: c.textMuted,
   },
 });
-
-function BitsmithsMark({ size = 58 }: { size?: number }) {
-  return (
-    <Svg width={size} height={(size * 21) / 20} viewBox='0 0 20 21'>
-      <Path
-        d='M5.518 14.7314H19.246C18.808 18.9504 15.596 20.6414 14.137 20.7324C12.677 20.8224 1.047 20.7324 0.0440038 20.7324C-0.229996 20.7324 0.682004 14.7314 5.518 14.7314Z'
-        fill={c.logoDark}
-      />
-      <Path
-        d='M9.426 0H0C0.408 4.184 3.397 5.862 4.756 5.952C6.114 6.042 13.587 5.952 14.521 5.952C14.776 5.952 13.927 0 9.426 0ZM13.729 7.183H0C0.438 11.403 3.65 13.093 5.109 13.185C6.569 13.275 18.199 13.185 19.202 13.185C19.476 13.185 18.564 7.183 13.728 7.183'
-        fill={c.brandGreen}
-      />
-    </Svg>
-  );
-}
 
 /** Policy content is CKEditor-authored HTML with a small, known tag set
  *  (headings, paragraphs, bold/italic, links, lists). This maps it onto
@@ -210,16 +151,18 @@ function renderBlock(node: ChildNode, key: number): React.ReactNode {
     case 'H1':
     case 'H2':
       return (
-        <Text key={key} style={styles.h2}>
-          {inline}
-        </Text>
+        <View key={key} style={styles.h2Block} wrap={false}>
+          <Text style={styles.h2}>{inline}</Text>
+          <View style={styles.headingRule} />
+        </View>
       );
     case 'H3':
     case 'H4':
       return (
-        <Text key={key} style={styles.h3}>
-          {inline}
-        </Text>
+        <View key={key} style={styles.h3Block} wrap={false}>
+          <Text style={styles.h3}>{inline}</Text>
+          <View style={styles.headingRule} />
+        </View>
       );
     case 'UL':
     case 'OL': {
@@ -250,11 +193,22 @@ function renderBlock(node: ChildNode, key: number): React.ReactNode {
   }
 }
 
-function htmlToPdfBlocks(html: string): React.ReactNode[] {
+function htmlToPdfBlocks(
+  html: string,
+  documentTitle: string,
+): React.ReactNode[] {
   const parsed = new DOMParser().parseFromString(html, 'text/html');
-  return Array.from(parsed.body.childNodes).map((node, index) =>
-    renderBlock(node, index),
-  );
+  const blocks = Array.from(parsed.body.childNodes).filter((node, index) => {
+    if (index !== 0 || !(node instanceof HTMLElement)) return true;
+    const isHeading = node.tagName === 'H1' || node.tagName === 'H2';
+    return !(
+      isHeading &&
+      node.textContent?.trim().toLocaleLowerCase() ===
+        documentTitle.trim().toLocaleLowerCase()
+    );
+  });
+
+  return blocks.map((node, index) => renderBlock(node, index));
 }
 
 type PolicyPdfDocumentProps = {
@@ -266,30 +220,51 @@ export function PolicyPdfDocument({ policy, version }: PolicyPdfDocumentProps) {
   const metaFields = [
     { label: 'DOCUMENT', value: 'POLICY' },
     { label: 'CATEGORY', value: policy.category.toUpperCase() },
-    { label: 'PUBLISHED', value: new Date(version.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
+    {
+      label: 'PUBLISHED',
+      value: new Date(version.publishedAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+    },
   ];
 
   return (
     <Document title={`${policy.title} — Policy`} author='Bitsmiths Studios LLC'>
       <Page size='A4' style={styles.page}>
+        <View style={styles.watermark}>
+          <BitsmithsMark size={metrics.watermarkSize} variant='watermark' />
+        </View>
+
         <View fixed>
-          <View style={styles.masthead}>
-            <View style={styles.markWrap}>
-              <BitsmithsMark size={58} />
+          <TopBar />
+          <View style={payslipStyles.masthead}>
+            <View style={payslipStyles.markWrap}>
+              <BitsmithsMark size={metrics.logoSize} />
             </View>
-            <View style={styles.lockup}>
-              <Text style={styles.companyName}>BITSMITHS STUDIOS LLC</Text>
-              <Text style={styles.docTitle}>POLICY DOCUMENT</Text>
+            <View style={payslipStyles.lockup}>
+              <Text style={payslipStyles.companyName}>
+                BITSMITHS STUDIOS LLC
+              </Text>
+              <Text style={payslipStyles.docTitle}>POLICY DOCUMENT</Text>
             </View>
           </View>
-          <View style={styles.mastheadRule} />
+          <View style={payslipStyles.mastheadRule} />
 
-          <View style={styles.headerMeta}>
-            <View style={styles.metaRow}>
-              {metaFields.map((field) => (
-                <View key={field.label} style={styles.metaCell}>
-                  <Text style={styles.metaLabel}>{field.label}</Text>
-                  <Text style={styles.metaValue}>{field.value}</Text>
+          <View style={payslipStyles.headerMeta}>
+            <View style={payslipStyles.metaGrid}>
+              {metaFields.map((field, index) => (
+                <View
+                  key={field.label}
+                  style={
+                    index === metaFields.length - 1
+                      ? [payslipStyles.metaCell, payslipStyles.metaCellLast]
+                      : payslipStyles.metaCell
+                  }
+                >
+                  <Text style={payslipStyles.metaLabel}>{field.label}</Text>
+                  <Text style={payslipStyles.metaValue}>{field.value}</Text>
                 </View>
               ))}
             </View>
@@ -297,9 +272,9 @@ export function PolicyPdfDocument({ policy, version }: PolicyPdfDocumentProps) {
         </View>
 
         <View style={styles.body}>
-          <Text style={styles.title}>{policy.title}</Text>
-          <View style={styles.sectionRule} />
-          {htmlToPdfBlocks(version.contentHtml)}
+          <Text style={styles.documentTitle}>{policy.title}</Text>
+          <View style={styles.mainHeadingRule} />
+          {htmlToPdfBlocks(version.contentHtml, policy.title)}
         </View>
 
         <Text
@@ -309,26 +284,23 @@ export function PolicyPdfDocument({ policy, version }: PolicyPdfDocumentProps) {
           }
           fixed
         />
-        <View style={styles.footer} fixed>
-          <View style={styles.footerRule} />
-          <View style={styles.footerInner}>
-            <View style={styles.footerItem}>
-              <Text style={styles.footerStrong}>Bitsmiths Studios LLC</Text>
-              <Text style={styles.footerText}>Confidential</Text>
+        <View style={payslipStyles.footer} fixed>
+          <View style={payslipStyles.footerRule} />
+          <View style={payslipStyles.footerInner}>
+            <View style={payslipStyles.footerItem}>
+              <ContactIcon kind='site' />
+              <Text style={payslipStyles.footerText}>{contact.site}</Text>
             </View>
-            <View style={styles.footerItem}>
-              <Text style={styles.footerStrong}>Website</Text>
-              <Text style={styles.footerText}>{contact.site}</Text>
+            <View style={payslipStyles.footerItem}>
+              <ContactIcon kind='phone' />
+              <Text style={payslipStyles.footerText}>{contact.phone}</Text>
             </View>
-            <View style={styles.footerItem}>
-              <Text style={styles.footerStrong}>Contact</Text>
-              <Text style={styles.footerText}>{contact.phone}</Text>
-            </View>
-            <View style={styles.footerItem}>
-              <Text style={styles.footerStrong}>Address</Text>
-              <Text style={styles.footerText}>{contact.address}</Text>
+            <View style={payslipStyles.footerItem}>
+              <ContactIcon kind='pin' />
+              <Text style={payslipStyles.footerText}>{contact.address}</Text>
             </View>
           </View>
+          <BottomBar />
         </View>
       </Page>
     </Document>

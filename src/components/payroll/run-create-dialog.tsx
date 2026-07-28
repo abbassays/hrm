@@ -54,7 +54,7 @@ export function RunCreateDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button iconLeft={PlusCircle}>Create run</Button>
+        <Button iconLeft={PlusCircle}>Create payroll</Button>
       </DialogTrigger>
       <ScrollableDialogContent>
         <DialogHeader>

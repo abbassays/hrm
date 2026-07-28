@@ -181,11 +181,39 @@ export function PayrollCyclePageContent({
                   <BulkAdjustmentDialog
                     runId={run.id}
                     payslipIds={[...selectedIds]}
+                    kind='earning'
+                  />
+                  <BulkAdjustmentDialog
+                    runId={run.id}
+                    payslipIds={[...selectedIds]}
+                    kind='deduction'
                   />
                 </>
               )}
             </div>
             <div className='flex flex-wrap items-center gap-2'>
+              {locked && (
+                <ConfirmDialog
+                  trigger={
+                    <Button variant='outline' disabled={busy}>
+                      Reopen run
+                    </Button>
+                  }
+                  title='Reopen this payroll run?'
+                  description='The run returns to editable: figures unfreeze, the swept medical and overtime are released back to the pool, and employees can no longer see their payslips. Finalize again to lock it.'
+                  confirmLabel='Reopen run'
+                  destructive
+                  isLoading={unlock.isPending}
+                  onConfirm={() => unlock.execute({ run_id: run.id })}
+                />
+              )}
+              {locked && (
+                <ExportPayoneerSheet
+                  runId={run.id}
+                  rows={exportRows}
+                  disabled={busy}
+                />
+              )}
               {!locked ? (
                 <ConfirmDialog
                   trigger={
@@ -201,43 +229,22 @@ export function PayrollCyclePageContent({
                   onConfirm={() => lock.execute({ run_id: run.id })}
                 />
               ) : (
-                <>
-                  <ConfirmDialog
-                    trigger={
-                      <Button variant='outline' disabled={busy}>
-                        Reopen run
-                      </Button>
-                    }
-                    title='Reopen this payroll run?'
-                    description='The run returns to editable: figures unfreeze, the swept medical and overtime are released back to the pool, and employees can no longer see their payslips. Finalize again to lock it.'
-                    confirmLabel='Reopen run'
-                    destructive
-                    isLoading={unlock.isPending}
-                    onConfirm={() => unlock.execute({ run_id: run.id })}
-                  />
-                  {/* Send notifications button moved to the end and styled primary */}
-                </>
+                <ConfirmDialog
+                  trigger={
+                    <Button
+                      iconLeft={Send}
+                      disabled={busy || gridRows.length === 0}
+                    >
+                      Send notifications
+                    </Button>
+                  }
+                  title='Send payslip notifications?'
+                  description='Emails every employee in this run their payslip PDF. Sending again re-sends to everyone.'
+                  confirmLabel='Send notifications'
+                  isLoading={sendAll.isPending}
+                  onConfirm={() => sendAll.execute({ run_id: run.id })}
+                />
               )}
-              <ExportPayoneerSheet
-                runId={run.id}
-                rows={exportRows}
-                disabled={!locked}
-              />
-              <ConfirmDialog
-                trigger={
-                  <Button
-                    iconLeft={Send}
-                    disabled={busy || gridRows.length === 0}
-                  >
-                    Send notifications
-                  </Button>
-                }
-                title='Send payslip notifications?'
-                description='Emails every employee in this run their payslip PDF. Sending again re-sends to everyone.'
-                confirmLabel='Send notifications'
-                isLoading={sendAll.isPending}
-                onConfirm={() => sendAll.execute({ run_id: run.id })}
-              />
             </div>
           </div>
 

@@ -26,42 +26,40 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { ControlledSelect } from '@/components/ui/form/controlled-select';
 import { Input } from '@/components/ui/input';
 
 import {
-  PAYSLIP_LINE_ITEM_KINDS,
   payslipLineItemCopy,
+  type PayslipLineItemKind,
 } from '@/constants/payroll-line-items';
 import {
-  type BulkPayslipLineItemFormInput,
-  bulkPayslipLineItemFormSchema,
+  type PayslipLineItemFormInput,
+  payslipLineItemFormSchema,
 } from '@/schema/payroll';
-
-const kindOptions = PAYSLIP_LINE_ITEM_KINDS.map((kind) => ({
-  value: kind,
-  label: payslipLineItemCopy[kind].optionLabel,
-}));
 
 type BulkAdjustmentDialogProps = {
   runId: string;
   /** The selected rows. One action call fans out across all of them. */
   payslipIds: string[];
+  /** The toolbar button decides the sign, keeping adjustment and deduction
+   *  actions explicit instead of making the admin choose it again in a modal. */
+  kind: PayslipLineItemKind;
 };
 
-/** Adds the same line item to every selected employee at once. Unlike the grid
- *  cells it isn't anchored to a column, so it asks which one to file under
- *  rather than inferring the sign. */
+/** Adds the same adjustment or deduction to every selected employee at once. */
 export function BulkAdjustmentDialog({
   runId,
   payslipIds,
+  kind,
 }: BulkAdjustmentDialogProps) {
   const [open, setOpen] = useState(false);
   const count = payslipIds.length;
+  const copy = payslipLineItemCopy[kind];
+  const actionLabel = `Add ${copy.noun.toLowerCase()}`;
 
-  const form = useForm<BulkPayslipLineItemFormInput>({
-    resolver: zodResolver(bulkPayslipLineItemFormSchema),
-    defaultValues: { kind: 'earning', label: '', amount: 0 },
+  const form = useForm<PayslipLineItemFormInput>({
+    resolver: zodResolver(payslipLineItemFormSchema),
+    defaultValues: { label: '', amount: 0 },
   });
 
   // Owns its own action rather than taking the grid's: a rejected write has to
@@ -81,7 +79,7 @@ export function BulkAdjustmentDialog({
     },
   );
 
-  const onSubmit = ({ kind, label, amount }: BulkPayslipLineItemFormInput) => {
+  const onSubmit = ({ label, amount }: PayslipLineItemFormInput) => {
     addField.execute({
       run_id: runId,
       payslip_ids: payslipIds,
@@ -100,14 +98,14 @@ export function BulkAdjustmentDialog({
     >
       <DialogTrigger asChild>
         <Button type='button' variant='outline' size='sm' iconLeft={Plus}>
-          Add line item
+          {actionLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <DialogTitle>Add a line item</DialogTitle>
+          <DialogTitle>{actionLabel}</DialogTitle>
           <DialogDescription>
-            Applies to the {count} selected{' '}
+            Applies a {copy.noun.toLowerCase()} to the {count} selected{' '}
             {count === 1 ? 'employee' : 'employees'}. Each gets their own copy,
             so you can edit or remove it per employee afterward.
           </DialogDescription>
@@ -117,12 +115,6 @@ export function BulkAdjustmentDialog({
             onSubmit={form.handleSubmit(onSubmit)}
             className='flex flex-col gap-4'
           >
-            <ControlledSelect<BulkPayslipLineItemFormInput>
-              name='kind'
-              label='Type'
-              options={kindOptions}
-              placeholder='Select'
-            />
             <div className='grid grid-cols-3 gap-3'>
               <FormField
                 control={form.control}
@@ -131,7 +123,7 @@ export function BulkAdjustmentDialog({
                   <FormItem className='col-span-2'>
                     <FormLabel>Label</FormLabel>
                     <FormControl>
-                      <Input placeholder='Eid Bonus' {...field} />
+                      <Input placeholder={copy.labelPlaceholder} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,7 +152,8 @@ export function BulkAdjustmentDialog({
                 Cancel
               </Button>
               <Button type='submit' isLoading={addField.isPending}>
-                Add to {count} {count === 1 ? 'employee' : 'employees'}
+                {actionLabel} for {count}{' '}
+                {count === 1 ? 'employee' : 'employees'}
               </Button>
             </DialogFooter>
           </form>
