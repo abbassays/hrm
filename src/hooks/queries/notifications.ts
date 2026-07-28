@@ -34,10 +34,11 @@ const toNotification = (row: NotificationRow) =>
 /** The caller's feed, newest first. Capped at 50 — the bell is a recent-events
  *  view, not an archive. */
 const fetchNotifications = authQuery(
-  async ({ supabase }): Promise<Notification[]> => {
+  async ({ supabase, user }): Promise<Notification[]> => {
     const { data, error } = await supabase
       .from('notifications')
       .select(NOTIFICATION_COLUMNS)
+      .eq('recipient_id', user.id)
       .order('created_at', { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
@@ -47,15 +48,18 @@ const fetchNotifications = authQuery(
 );
 
 /** Just the unread count for the badge — a `head` count, so no rows travel. */
-const fetchUnreadCount = authQuery(async ({ supabase }): Promise<number> => {
-  const { count, error } = await supabase
-    .from('notifications')
-    .select('id', { count: 'exact', head: true })
-    .is('read_at', null);
-  if (error) throw new Error(error.message);
+const fetchUnreadCount = authQuery(
+  async ({ supabase, user }): Promise<number> => {
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_id', user.id)
+      .is('read_at', null);
+    if (error) throw new Error(error.message);
 
-  return count ?? 0;
-});
+    return count ?? 0;
+  },
+);
 
 /** Poll interval for the bell. The shell (and therefore the bell) persists
  *  across in-app navigation, so it won't refetch on route changes; a modest

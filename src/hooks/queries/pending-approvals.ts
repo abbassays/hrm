@@ -23,9 +23,13 @@ const fetchPendingApprovals = authQuery(
   },
 );
 
-/** Admin: the guarded, union-normalized pending queue across all four sources. */
-export const usePendingApprovals = () =>
+/** Admin: the guarded, union-normalized pending queue across all four sources.
+ *  The optional guard lets shared shell components mount the hook without
+ *  calling the admin-only RPC for employees. */
+export const usePendingApprovals = (enabled = true) =>
   useQuery({
     queryKey: [QueryKeys.PENDING_APPROVALS],
     queryFn: () => fetchPendingApprovals(),
+    enabled,
+    refetchInterval: 60_000,
   });

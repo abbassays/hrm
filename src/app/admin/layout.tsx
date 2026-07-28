@@ -1,5 +1,6 @@
 import { ModeToggle } from '@/components/common/mode-toggle';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import {
   SidebarInset,
   SidebarProvider,
@@ -15,7 +16,8 @@ export default function AdminLayout({
       <SidebarInset className='min-w-0'>
         <header className='flex h-14 shrink-0 items-center gap-2 border-b border-border px-4'>
           <SidebarTrigger />
-          <div className='ml-auto'>
+          <div className='ml-auto flex items-center gap-2'>
+            <NotificationBell />
             <ModeToggle />
           </div>
         </header>

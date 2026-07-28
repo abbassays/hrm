@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { usePendingApprovals } from '@/hooks/queries/pending-approvals';
 import { useUnacknowledgedPolicyCount } from '@/hooks/queries/policies';
 import { useSystemConfig } from '@/hooks/queries/system-config';
 
@@ -44,6 +45,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
   const config = role === 'admin' ? adminNav : employeeNav;
   const pathname = usePathname();
   const unacknowledgedPolicies = useUnacknowledgedPolicyCount();
+  const pendingApprovals = usePendingApprovals(role === 'admin');
   const { data: systemConfig } = useSystemConfig();
 
   // Feature-flagged entries (e.g. Reimbursements) stay hidden until their
@@ -63,7 +65,9 @@ export function AppSidebar({ role }: AppSidebarProps) {
   const badgeFor = (item: { href: string; badge?: number }) =>
     role === 'employee' && item.href === paths.employee.policies
       ? unacknowledgedPolicies || undefined
-      : item.badge;
+      : role === 'admin' && item.href === paths.admin.approvals
+        ? pendingApprovals.data?.length || undefined
+        : item.badge;
 
   return (
     <Sidebar collapsible='icon' variant='inset'>
