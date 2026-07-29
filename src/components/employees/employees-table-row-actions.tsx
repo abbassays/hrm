@@ -6,6 +6,7 @@ import {
   MoreHorizontal,
   RotateCcw,
   Send,
+  Trash2,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -26,6 +27,7 @@ import {
 import { paths } from '@/constants/paths';
 
 import { CancelInviteDialog } from './cancel-invite-dialog';
+import { DeleteEmployeeDialog } from './delete-employee-dialog';
 import { ReturnOnboardingDialog } from './return-onboarding-dialog';
 
 import { EmployeeListItem } from '@/types/hrm';
@@ -42,11 +44,11 @@ export function EmployeesTableRowActions({
   employee,
 }: EmployeesTableRowActionsProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const label = employee.fullName || employee.email;
   const isInvited = employee.status === 'invited';
   const isSubmitted = employee.status === 'submitted';
-  const hasMenu = isInvited || isSubmitted;
 
   const resend = useResendInvite(() =>
     toast.success(`Invitation resent to ${employee.email}`),
@@ -63,58 +65,60 @@ export function EmployeesTableRowActions({
         </Button>
       </Link>
 
-      {hasMenu ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='size-8'
-              aria-label={`Actions for ${label}`}
-            >
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end' className='w-48'>
-            {isSubmitted && (
-              <>
-                <DropdownMenuItem
-                  disabled={approve.isPending}
-                  onSelect={() => approve.execute({ employeeId: employee.id })}
-                >
-                  <Check />
-                  Approve
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setReturnOpen(true)}>
-                  <RotateCcw />
-                  Return for changes
-                </DropdownMenuItem>
-              </>
-            )}
-            {isInvited && (
-              <>
-                <DropdownMenuItem
-                  disabled={resend.isPending}
-                  onSelect={() => resend.execute({ employeeId: employee.id })}
-                >
-                  <Send />
-                  Resend invite
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => setCancelOpen(true)}
-                  className='text-destructive focus:text-destructive'
-                >
-                  <X />
-                  Cancel invite
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        // Reserve the overflow slot so "View" lines up on rows without a menu.
-        <div className='size-8' aria-hidden />
-      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='size-8'
+            aria-label={`Actions for ${label}`}
+          >
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end' className='w-48'>
+          {isSubmitted && (
+            <>
+              <DropdownMenuItem
+                disabled={approve.isPending}
+                onSelect={() => approve.execute({ employeeId: employee.id })}
+              >
+                <Check />
+                Approve
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setReturnOpen(true)}>
+                <RotateCcw />
+                Return for changes
+              </DropdownMenuItem>
+            </>
+          )}
+          {isInvited && (
+            <>
+              <DropdownMenuItem
+                disabled={resend.isPending}
+                onSelect={() => resend.execute({ employeeId: employee.id })}
+              >
+                <Send />
+                Resend invite
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setCancelOpen(true)}
+                className='text-destructive focus:text-destructive'
+              >
+                <X />
+                Cancel invite
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuItem
+            onSelect={() => setDeleteOpen(true)}
+            className='text-destructive focus:text-destructive'
+          >
+            <Trash2 />
+            Delete employee
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Dialogs live outside the menu so closing the menu doesn't unmount them. */}
       {isInvited && (
@@ -133,6 +137,12 @@ export function EmployeesTableRowActions({
           onOpenChange={setReturnOpen}
         />
       )}
+      <DeleteEmployeeDialog
+        employeeId={employee.id}
+        employeeName={label}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
     </div>
   );
 }
