@@ -8,7 +8,7 @@ import { QueryKeys } from '@/constants/query-keys';
 
 import { type Tables } from '@/types/supabase';
 
-/** Private bucket holding Payoneer files at `<run_id>/payoneer-<ts>.xlsx`. */
+/** Private bucket holding Payoneer files at `<run_id>/salaries-mon-year.csv`. */
 export const PAYROLL_EXPORTS_BUCKET = 'payroll-exports';
 const SIGNED_URL_TTL_SECONDS = 60 * 5; // 5m — long enough to click through to a download
 

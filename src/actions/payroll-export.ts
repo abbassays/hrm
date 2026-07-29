@@ -146,7 +146,24 @@ export const exportPayoneer = authActionClient
     // Build the CSV from an array-of-arrays so column order === the header.
     const csv = toCsv([[...PAYONEER_HEADER], ...dataRows]);
 
-    const filePath = `${run_id}/${payoneerFileName(run.period_month, new Date())}`;
+    // Keep the payroll-month filename readable. Existing artifacts for this run
+    // claim the next Word-style copy suffix instead of putting a timestamp in
+    // every export name.
+    const { data: existingFiles, error: listError } =
+      await supabaseAdmin.storage
+        .from(EXPORTS_BUCKET)
+        .list(run_id, { limit: 1000 });
+    if (listError) throw new Error(listError.message);
+
+    const existingNames = new Set(
+      (existingFiles ?? []).map((file) => file.name),
+    );
+    let copyNumber = 0;
+    while (existingNames.has(payoneerFileName(run.period_month, copyNumber))) {
+      copyNumber += 1;
+    }
+
+    const filePath = `${run_id}/${payoneerFileName(run.period_month, copyNumber)}`;
     const { error: uploadError } = await supabaseAdmin.storage
       .from(EXPORTS_BUCKET)
       .upload(filePath, Buffer.from(csv, 'utf8'), {
