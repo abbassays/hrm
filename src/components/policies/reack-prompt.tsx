@@ -1,7 +1,7 @@
 'use client';
 
-import { Megaphone, X } from 'lucide-react';
-import { useState } from 'react';
+import { Megaphone } from 'lucide-react';
+import Link from 'next/link';
 
 import { usePendingAcknowledgments } from '@/hooks/queries/policies';
 
@@ -9,18 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { paths } from '@/constants/paths';
+
 /**
  * A simple employee dashboard banner for outstanding policy acknowledgments.
- * The banner can be dismissed until the page reloads, but it otherwise stays
- * attached to the current live count.
+ * It remains visible until the employee completes the outstanding reviews.
  */
 export function ReackPrompt() {
   const { data: pending, isLoading } = usePendingAcknowledgments();
-  const [dismissed, setDismissed] = useState(false);
 
   if (isLoading) return <Skeleton className='h-24 rounded-xl' />;
 
-  if (!pending.length || dismissed) {
+  if (!pending.length) {
     return null;
   }
 
@@ -43,14 +43,8 @@ export function ReackPrompt() {
             </p>
           </div>
         </div>
-        <Button
-          variant='ghost'
-          size='icon'
-          className='text-muted-foreground hover:text-foreground'
-          onClick={() => setDismissed(true)}
-          aria-label='Dismiss announcement'
-        >
-          <X className='size-4' />
+        <Button asChild size='sm'>
+          <Link href={paths.employee.policies}>View policies</Link>
         </Button>
       </CardContent>
     </Card>
