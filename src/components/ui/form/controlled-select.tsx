@@ -24,6 +24,7 @@ type ControlledSelectProps<TFieldValues extends FieldValues> = {
     | {
         label: string;
         value: string;
+        disabled?: boolean;
       }[];
   placeholder?: string;
   className?: string;
@@ -33,8 +34,8 @@ type ControlledSelectProps<TFieldValues extends FieldValues> = {
 };
 
 function isLabelValueOptions(
-  options: string[] | { label: string; value: string }[],
-): options is { label: string; value: string }[] {
+  options: string[] | { label: string; value: string; disabled?: boolean }[],
+): options is { label: string; value: string; disabled?: boolean }[] {
   // An empty array isn't a label/value list (there's no non-string element to
   // key on), so it falls through to the raw-value branch rather than a doomed
   // .find() that always returns undefined.
@@ -57,6 +58,7 @@ export function ControlledSelect<TFieldValues extends FieldValues>({
       render={({ field }) => (
         <FormItem className={cn('', containerClassName)}>
           <Select
+            value={field.value}
             onValueChange={(value) => {
               field.onChange(value);
             }}
@@ -105,7 +107,11 @@ export function ControlledSelect<TFieldValues extends FieldValues>({
                   );
                 else
                   return (
-                    <SelectItem key={idx} value={option.value}>
+                    <SelectItem
+                      key={idx}
+                      value={option.value}
+                      disabled={option.disabled}
+                    >
                       {option.label}
                     </SelectItem>
                   );

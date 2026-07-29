@@ -1054,7 +1054,6 @@ export type Database = {
         Args: {
           p_body_html: string
           p_category: Database["public"]["Enums"]["policy_category"]
-          p_slug: string
           p_title: string
         }
         Returns: {

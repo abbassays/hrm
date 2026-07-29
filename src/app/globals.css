@@ -199,6 +199,12 @@ body {
   padding-inline: 0.75rem;
 }
 
+.rich-text-editor .ck-editor,
+.rich-text-editor .ck-editor__main {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* Fill mode: the editor stretches to its flex parent's height (e.g. the
  * create-policy sheet) — toolbar stays fixed, the editable area grows and
  * scrolls internally. */

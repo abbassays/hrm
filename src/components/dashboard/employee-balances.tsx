@@ -4,8 +4,8 @@ import {
   ArrowRight,
   CalendarDays,
   HeartPulse,
-  Receipt,
   type LucideIcon,
+  Receipt,
 } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useMemo } from 'react';

@@ -20,12 +20,12 @@ const invalidatePolicies = (queryClient: ReturnType<typeof useQueryClient>) => {
 /** Create a policy and publish its version 1 (admin). The created row is handed
  *  to `onSuccess` so the caller can navigate straight to the new editor page.
  *
- *  A taken slug comes back as a field error rather than a server error; pass
- *  `onSlugError` to pin it under the input (the shared toast handler would
+ *  A taken category comes back as a field error rather than a server error; pass
+ *  `onCategoryError` to pin it under the input (the shared toast handler would
  *  otherwise announce it as a nameless "Validation Error"). */
 export function useCreatePolicy(
   onSuccess?: (policyId: string) => void,
-  onSlugError?: (message: string) => void,
+  onCategoryError?: (message: string) => void,
 ) {
   const queryClient = useQueryClient();
   return useAction(createPolicy, {
@@ -34,9 +34,10 @@ export function useCreatePolicy(
       if (data) onSuccess?.(data.id);
     },
     onError: (args) => {
-      const slugError = args.error.validationErrors?.fieldErrors?.slug?.[0];
-      if (slugError && onSlugError) {
-        onSlugError(slugError);
+      const categoryError =
+        args.error.validationErrors?.fieldErrors?.category?.[0];
+      if (categoryError && onCategoryError) {
+        onCategoryError(categoryError);
         return;
       }
       onError(args);

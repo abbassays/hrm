@@ -39,7 +39,7 @@ export function RichTextEditorImpl({
   return (
     <div
       className={cn(
-        'rich-text-editor rounded-md border border-input [&_.ck-toolbar]:rounded-t-md [&_.ck-toolbar]:border-0 [&_.ck-toolbar]:border-b [&_.ck-toolbar]:border-input',
+        'rich-text-editor min-w-0 max-w-full rounded-md border border-input [&_.ck-toolbar]:rounded-t-md [&_.ck-toolbar]:border-0 [&_.ck-toolbar]:border-b [&_.ck-toolbar]:border-input',
         className,
       )}
     >

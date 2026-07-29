@@ -8,7 +8,7 @@ import { authActionClient } from '@/lib/server/safe-action';
 import {
   acknowledgePolicySchema,
   createPolicySchema,
-  DUPLICATE_SLUG_MESSAGE,
+  DUPLICATE_CATEGORY_MESSAGE,
   publishPolicyVersionSchema,
 } from '@/schema/policy';
 import { markReviewedSchema } from '@/schema/policy-linkage';
@@ -35,16 +35,15 @@ export const createPolicy = authActionClient
 
     const { data, error } = await supabase.rpc('create_policy', {
       p_title: parsedInput.title,
-      p_slug: parsedInput.slug,
       p_category: parsedInput.category,
       p_body_html: sanitizeHtml(parsedInput.contentHtml),
     });
     if (error) {
-      // Surfaced as a field error rather than a thrown server error so the
-      // dialog can pin it under the Slug input instead of a generic toast.
+      // The category is uniquely constrained in the database as a final guard
+      // against two admins opening the sheet at the same time.
       if (error.code === '23505') {
         returnValidationErrors(createPolicySchema, {
-          slug: { _errors: [DUPLICATE_SLUG_MESSAGE] },
+          category: { _errors: [DUPLICATE_CATEGORY_MESSAGE] },
         });
       }
       throw new Error(error.message);
