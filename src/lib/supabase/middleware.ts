@@ -7,10 +7,11 @@ import { env } from '@/env';
 import type { AccountStatus } from '@/types/hrm';
 import type { Database } from '@/types/supabase';
 
-/** Reachable without a session: the public landing and every auth screen
- *  (login, forgot/reset password, accept invitation, OAuth callback). */
+/** Reachable without a session: every auth screen (login, forgot/reset
+ * password, accept invitation, OAuth callback). The root route is handled by
+ * the explicit middleware redirect below, so no landing page exists. */
 function isPublicRoute(pathname: string) {
-  return pathname === paths.home || pathname.startsWith('/auth');
+  return pathname.startsWith('/auth');
 }
 
 /** Employee-app routes live in the (employee) route group, which adds no URL
@@ -88,6 +89,12 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // There is no public landing page. Route unauthenticated root visits to the
+  // sign-in page here, before Next tries to resolve a `/` page module.
+  if (!user && pathname === paths.home) {
+    return redirectWithCookies(request, supabaseResponse, paths.auth.login);
+  }
+
   // Session guard: no session on a protected route → send to login.
   if (!user && !isPublicRoute(pathname)) {
     return redirectWithCookies(request, supabaseResponse, paths.auth.login);
@@ -109,8 +116,8 @@ export async function updateSession(request: NextRequest) {
       ? paths.admin.dashboard
       : (gate ?? paths.employee.dashboard);
 
-    // Signed-in users skip the public landing and go straight to where they
-    // belong right now (an admin's dashboard, or an employee's gate/app).
+    // Signed-in users skip the root sign-in redirect and go straight to where
+    // they belong right now (an admin's dashboard, or an employee's gate/app).
     if (pathname === paths.home) {
       return redirectWithCookies(request, supabaseResponse, roleHome);
     }
