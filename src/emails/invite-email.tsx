@@ -59,10 +59,10 @@ export function InviteEmail({
               src={`${baseUrl}/email/logo.png`}
               width='40'
               height='42'
-              alt={appName}
+              alt='Bitsmiths'
               style={styles.logo}
             />
-            <Text style={styles.wordmark}>{appName}</Text>
+            <Text style={styles.wordmark}>Bitsmiths</Text>
           </Section>
 
           <Section style={styles.card}>

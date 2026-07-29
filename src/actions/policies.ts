@@ -2,9 +2,13 @@
 
 import { returnValidationErrors } from 'next-safe-action';
 
+import { sendPolicyUpdatedEmail } from '@/lib/resend/send-policy-emails';
 import { sanitizeHtml } from '@/lib/sanitize-html';
 import { authActionClient } from '@/lib/server/safe-action';
+import Logger from '@/utils/logger';
 
+import { appConfig } from '@/config/app';
+import { paths } from '@/constants/paths';
 import {
   acknowledgePolicySchema,
   createPolicySchema,
@@ -68,6 +72,51 @@ export const publishPolicyVersion = authActionClient
       p_body_html: sanitizeHtml(parsedInput.bodyHtml),
     });
     if (error) throw new Error(error.message);
+
+    // The policy version is already published before email work starts. A
+    // Resend failure must not roll back the update or prevent its in-app
+    // notification trigger from reaching employees.
+    try {
+      const [
+        { data: policy, error: policyError },
+        { data: employees, error: employeesError },
+      ] = await Promise.all([
+        supabase
+          .from('policies')
+          .select('title')
+          .eq('id', parsedInput.policyId)
+          .single(),
+        supabase
+          .from('employees')
+          .select('email, full_name')
+          .eq('account_status', 'active'),
+      ]);
+
+      if (policyError) throw policyError;
+      if (employeesError) throw employeesError;
+
+      const policyUrl = new URL(
+        paths.employee.policyDetail(parsedInput.policyId),
+        appConfig.appUrl,
+      ).toString();
+      const results = await Promise.allSettled(
+        (employees ?? []).map((employee) =>
+          sendPolicyUpdatedEmail({
+            to: employee.email,
+            fullName: employee.full_name,
+            policyTitle: policy.title,
+            policyUrl,
+          }),
+        ),
+      );
+      results.forEach((result) => {
+        if (result.status === 'rejected') {
+          Logger.error('Failed to send policy update email', result.reason);
+        }
+      });
+    } catch (emailError) {
+      Logger.error('Failed to prepare policy update emails', emailError);
+    }
 
     return data;
   });

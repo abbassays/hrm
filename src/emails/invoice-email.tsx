@@ -22,8 +22,7 @@ export type InvoiceEmailProps = {
  * Sent to the employee once their payroll run is locked — the point at which the
  * figures are frozen and their payslip becomes visible to them under RLS. The
  * payslip PDF rides along as an attachment (see `send-invoice-emails.ts`), so
- * this body stays a short cover note: the period, the net figure, and a link
- * back for the itemized view.
+ * this body stays a short cover note with one direct link back to the payslip.
  */
 export function InvoiceEmail({
   fullName,
@@ -46,19 +45,8 @@ export function InvoiceEmail({
         <Heading style={emailStyles.heading}>Your payslip is ready</Heading>
         <Text style={emailStyles.paragraph}>{greeting}</Text>
         <Text style={emailStyles.paragraph}>
-          Your payslip for <strong>{cycleLabel}</strong> has been finalized and
-          is attached to this email as a PDF.
-        </Text>
-
-        <Text style={emailStyles.paragraph}>
-          The attached PDF itemizes every earning and deduction that made up
-          your pay for <strong>{cycleLabel}</strong>.
-        </Text>
-
-        <Text style={emailStyles.paragraph}>
-          The attached PDF itemizes every earning and deduction that made up
-          this figure. You can find this and every earlier payslip on your
-          payslips page at any time.
+          Your <strong>{cycleLabel}</strong> payslip is ready and attached as a
+          PDF. You can also view it anytime from your payslips page.
         </Text>
 
         <Section style={emailStyles.buttonWrap}>

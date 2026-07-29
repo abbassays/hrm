@@ -51,10 +51,10 @@ export function EmailLayout({
               src={`${baseUrl}/email/logo.png`}
               width='40'
               height='42'
-              alt={appName}
+              alt='Bitsmiths'
               style={emailStyles.logo}
             />
-            <Text style={emailStyles.wordmark}>{appName}</Text>
+            <Text style={emailStyles.wordmark}>Bitsmiths</Text>
           </Section>
 
           {children}
