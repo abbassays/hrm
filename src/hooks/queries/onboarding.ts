@@ -182,3 +182,34 @@ export const useIdentityDocFiles = (ownerId: string) =>
       return result;
     },
   });
+
+/** A deliberately narrow variant for roster-style avatars. It reads the object
+ * metadata to determine whether a photo exists, but signs only the image — not
+ * the employee's CNIC documents that share the same private bucket. */
+export const useProfilePhoto = (ownerId: string) =>
+  useQuery({
+    queryKey: [QueryKeys.IDENTITY_DOC_FILES, ownerId, 'profile-photo'],
+    enabled: !!ownerId,
+    staleTime: (SIGNED_URL_TTL_SECONDS - 5 * 60) * 1000,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<IdentityDocFile | null> => {
+      const supabase = createSupabaseBrowserClient();
+      const { data: files, error } = await supabase.storage
+        .from(IDENTITY_DOCS_BUCKET)
+        .list(ownerId);
+      if (error) throw new Error(error.message);
+
+      const photo = files?.find((file) => file.name === 'photo');
+      const mimeType =
+        (photo?.metadata as { mimetype?: string } | null)?.mimetype ?? '';
+      if (!photo || !mimeType.startsWith('image/')) return null;
+
+      const { data, error: signError } = await supabase.storage
+        .from(IDENTITY_DOCS_BUCKET)
+        .createSignedUrl(`${ownerId}/photo`, SIGNED_URL_TTL_SECONDS);
+      if (signError) throw new Error(signError.message);
+      if (!data?.signedUrl) return null;
+
+      return { url: data.signedUrl, mimeType };
+    },
+  });

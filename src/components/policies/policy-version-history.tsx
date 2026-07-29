@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { PolicyContent } from './policy-content';
+import { PolicyEmployeeAvatar } from './policy-employee-avatar';
 
 import {
   EmployeeListItem,
@@ -48,13 +49,6 @@ type PolicyVersionHistoryProps = {
   /** Omit to hide the revert action (e.g. read-only contexts). */
   onRevert?: (version: PolicyVersion) => void;
 };
-
-const initialsOf = (fullName: string) =>
-  fullName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
 
 export function PolicyVersionHistory({
   policy,
@@ -195,9 +189,10 @@ export function PolicyVersionHistory({
                         className='flex items-center justify-between gap-3 bg-muted/30 px-3 py-2.5'
                       >
                         <span className='flex items-center gap-2.5'>
-                          <span className='flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground'>
-                            {initialsOf(employee.fullName)}
-                          </span>
+                          <PolicyEmployeeAvatar
+                            employeeId={employee.id}
+                            fullName={employee.fullName}
+                          />
                           <span className='text-sm font-medium'>
                             {employee.fullName}
                           </span>

@@ -81,7 +81,7 @@ function TeamMemberCard({ member, currentEmployee }: { member: EmployeeListItem;
               )}
             </div>
             <span className='truncate text-xs text-muted-foreground'>
-              {member.designation}
+              {member.designation || 'Designation not set'}
             </span>
           </div>
         </div>
