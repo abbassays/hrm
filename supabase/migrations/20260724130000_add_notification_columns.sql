@@ -15,4 +15,4 @@ ALTER TABLE payslips
   ADD COLUMN IF NOT EXISTS notification_last_error text;
 
 CREATE INDEX IF NOT EXISTS idx_payslips_run_notification_status
-  ON payslips (run_id, notification_status);
+  ON payslips (payroll_run_id, notification_status);
