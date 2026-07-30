@@ -46,5 +46,5 @@ export async function sendOnboardingInvite({
     employeeName,
   });
 
-  await sendInviteEmail({ to, subject, html });
+  await sendInviteEmail({ to, subject, bodyHtml: html });
 }

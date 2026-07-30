@@ -3,13 +3,14 @@ import 'server-only';
 import { resend } from '@/lib/resend/client';
 
 import { appConfig } from '@/config/app';
+import { OnboardingInviteEmail } from '@/emails/onboarding-invite-email';
 
 type SendInviteEmailInput = {
   to: string;
   /** Fully rendered subject line (tokens already substituted). */
   subject: string;
   /** Fully rendered, sanitized HTML body (tokens already substituted). */
-  html: string;
+  bodyHtml: string;
 };
 
 /**
@@ -24,14 +25,19 @@ type SendInviteEmailInput = {
 export async function sendInviteEmail({
   to,
   subject,
-  html,
+  bodyHtml,
 }: SendInviteEmailInput) {
   const { error } = await resend.emails.send({
     from: appConfig.emails.sender,
     replyTo: appConfig.emails.support,
     to,
     subject,
-    html,
+    react: OnboardingInviteEmail({
+      bodyHtml,
+      appName: appConfig.appName,
+      baseUrl: appConfig.appUrl,
+      supportEmail: appConfig.emails.support,
+    }),
   });
 
   if (error) {
