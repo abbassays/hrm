@@ -1,10 +1,11 @@
 const normalizeText = (text: string) => text.trim().replace(/\s+/g, ' ');
 
-/** Class stamped onto every changed line in the new content — a heading or
- *  paragraph, or an individual list item rather than the whole list — so
- *  the employee-facing view can highlight exactly what changed instead of
- *  making them re-read the whole document. */
-export const POLICY_DIFF_HIGHLIGHT_CLASS = 'policy-diff-highlight';
+/** Classes stamped onto changed blocks in the employee-facing diff view. */
+export const POLICY_DIFF_ADDED_CLASS = 'policy-diff-added';
+export const POLICY_DIFF_REMOVED_CLASS = 'policy-diff-removed';
+
+/** @deprecated Use POLICY_DIFF_ADDED_CLASS or POLICY_DIFF_REMOVED_CLASS. */
+export const POLICY_DIFF_HIGHLIGHT_CLASS = POLICY_DIFF_ADDED_CLASS;
 
 type DiffBlock = {
   element: Element;
@@ -42,8 +43,58 @@ function collectBlocks(html: string): DiffBlock[] {
   return collectBlocksFromDocument(doc);
 }
 
-function markBlock(block: DiffBlock) {
-  block.element.classList.add(POLICY_DIFF_HIGHLIGHT_CLASS);
+function markAdded(block: DiffBlock) {
+  block.element.classList.add(POLICY_DIFF_ADDED_CLASS);
+}
+
+function markRemoved(element: Element) {
+  element.classList.add(POLICY_DIFF_REMOVED_CLASS);
+}
+
+function cloneBlockElement(block: DiffBlock, doc: Document): Element {
+  return doc.importNode(block.element, true) as Element;
+}
+
+function insertAtBlockPosition(
+  doc: Document,
+  element: Element,
+  beforeElement: Element | null,
+) {
+  if (!beforeElement) {
+    doc.body.appendChild(element);
+    return;
+  }
+
+  const anchor =
+    beforeElement.tagName === 'LI' && beforeElement.parentElement
+      ? beforeElement.parentElement
+      : beforeElement;
+
+  anchor.parentElement?.insertBefore(element, anchor);
+}
+
+function insertRemovedBlock(
+  doc: Document,
+  block: DiffBlock,
+  beforeBlock: DiffBlock | undefined,
+) {
+  const cloned = cloneBlockElement(block, doc);
+  markRemoved(cloned);
+  const beforeElement = beforeBlock?.element ?? null;
+
+  if (cloned.tagName === 'LI') {
+    if (beforeElement?.tagName === 'LI' && beforeElement.parentElement) {
+      beforeElement.parentElement.insertBefore(cloned, beforeElement);
+      return;
+    }
+
+    const list = doc.createElement('ul');
+    list.appendChild(cloned);
+    insertAtBlockPosition(doc, list, beforeElement);
+    return;
+  }
+
+  insertAtBlockPosition(doc, cloned, beforeElement);
 }
 
 type EditOperation =
@@ -133,11 +184,20 @@ export function highlightChangedBlocks(
   const newBlocks = collectBlocksFromDocument(doc);
   const operations = buildEditOperations(oldBlocks, newBlocks);
 
+  let nextNewIndex = 0;
+
   for (const operation of operations) {
-    if (operation.type === 'insert') {
-      markBlock(operation.block);
+    if (operation.type === 'equal') {
+      nextNewIndex += 1;
+    } else if (operation.type === 'insert') {
+      markAdded(newBlocks[nextNewIndex]);
+      nextNewIndex += 1;
+    } else if (operation.type === 'delete') {
+      insertRemovedBlock(doc, operation.block, newBlocks[nextNewIndex]);
     } else if (operation.type === 'replace') {
-      markBlock(operation.newBlock);
+      insertRemovedBlock(doc, operation.oldBlock, newBlocks[nextNewIndex]);
+      markAdded(newBlocks[nextNewIndex]);
+      nextNewIndex += 1;
     }
   }
 

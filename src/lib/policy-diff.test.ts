@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import {
   getPolicyDiffSummary,
   highlightChangedBlocks,
-  POLICY_DIFF_HIGHLIGHT_CLASS,
+  POLICY_DIFF_ADDED_CLASS,
+  POLICY_DIFF_REMOVED_CLASS,
 } from './policy-diff';
 
 describe('policy diff helpers', () => {
@@ -16,26 +17,31 @@ describe('policy diff helpers', () => {
 
     const html = highlightChangedBlocks(oldHtml, newHtml);
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    const markedBlocks = Array.from(
-      doc.body.querySelectorAll(`.${POLICY_DIFF_HIGHLIGHT_CLASS}`),
+    const addedBlocks = Array.from(
+      doc.body.querySelectorAll(`.${POLICY_DIFF_ADDED_CLASS}`),
     );
 
-    expect(markedBlocks.some((node) => node.textContent?.includes('New guidance added'))).toBe(true);
-    expect(markedBlocks.some((node) => node.textContent?.includes('Second'))).toBe(true);
+    expect(addedBlocks.some((node) => node.textContent?.includes('New guidance added'))).toBe(true);
+    expect(addedBlocks.some((node) => node.textContent?.includes('Second'))).toBe(true);
     expect(getPolicyDiffSummary(oldHtml, newHtml)).toBe(2);
   });
 
-  it('treats deletions from the previous version as a change', () => {
+  it('shows removed blocks in red and replacements as remove-then-add', () => {
     const oldHtml = '<p>Alpha</p><p>Beta</p><p>Gamma</p>';
     const newHtml = '<p>Alpha</p><p>Delta</p>';
 
     const html = highlightChangedBlocks(oldHtml, newHtml);
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    const markedBlocks = Array.from(
-      doc.body.querySelectorAll(`.${POLICY_DIFF_HIGHLIGHT_CLASS}`),
+    const addedBlocks = Array.from(
+      doc.body.querySelectorAll(`.${POLICY_DIFF_ADDED_CLASS}`),
+    );
+    const removedBlocks = Array.from(
+      doc.body.querySelectorAll(`.${POLICY_DIFF_REMOVED_CLASS}`),
     );
 
-    expect(markedBlocks.some((node) => node.textContent?.includes('Delta'))).toBe(true);
+    expect(addedBlocks.some((node) => node.textContent?.includes('Delta'))).toBe(true);
+    expect(removedBlocks.some((node) => node.textContent?.includes('Beta'))).toBe(true);
+    expect(removedBlocks.some((node) => node.textContent?.includes('Gamma'))).toBe(true);
     expect(getPolicyDiffSummary(oldHtml, newHtml)).toBe(2);
   });
 });
