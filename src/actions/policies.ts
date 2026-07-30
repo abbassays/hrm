@@ -12,6 +12,7 @@ import { paths } from '@/constants/paths';
 import {
   acknowledgePolicySchema,
   createPolicySchema,
+  deletePolicySchema,
   DUPLICATE_CATEGORY_MESSAGE,
   publishPolicyVersionSchema,
 } from '@/schema/policy';
@@ -119,6 +120,26 @@ export const publishPolicyVersion = authActionClient
     }
 
     return data;
+  });
+
+/** Delete a policy document and all of the history it owns (admin only).
+ * `policy_versions`, their acknowledgments, and the policy's reconciliation
+ * marker are all foreign-key dependents with database-level cascades. */
+export const deletePolicy = authActionClient
+  .schema(deletePolicySchema)
+  .action(async ({ parsedInput, ctx: { supabase, authUser } }) => {
+    requireAdmin(authUser.user?.app_metadata.role);
+
+    const { data, error } = await supabase
+      .from('policies')
+      .delete()
+      .eq('id', parsedInput.policyId)
+      .select('id')
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Policy not found');
+
+    return { id: data.id };
   });
 
 /** A repeat acknowledgment trips `unique (employee_id, policy_version_id)`.

@@ -1,13 +1,15 @@
 'use client';
 
 import { format } from 'date-fns';
-import { FileText, Plus } from 'lucide-react';
+import { FileText, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
+import { useDeletePolicy } from '@/hooks/actions/use-manage-policies';
 import { currentVersion, usePolicies } from '@/hooks/queries/policies';
 
+import { ConfirmDialog } from '@/components/hrm/confirm-dialog';
 import { EmptyState } from '@/components/hrm/empty-state';
 import { PageHeader } from '@/components/hrm/page-header';
 import { HrmSettingsForm } from '@/components/settings/hrm-settings-form';
@@ -28,6 +30,8 @@ const TAB_VALUES = ['documents', 'configuration', 'onboarding-email'] as const;
 
 export function AdminPoliciesPageContent() {
   const { data: policies, isLoading } = usePolicies();
+  const { executeAsync: deletePolicy, isPending: isDeleting } =
+    useDeletePolicy();
   const [createOpen, setCreateOpen] = useState(false);
 
   // Deep-linkable tabs — e.g. the invite dialog links here with
@@ -74,23 +78,44 @@ export function AdminPoliciesPageContent() {
                 const latest = currentVersion(policy);
                 return (
                   <li key={policy.id}>
-                    <Link
-                      href={paths.admin.policyDetail(policy.id)}
-                      className='flex w-full items-center justify-between gap-3 px-4 py-3 hover:bg-accent hover:text-accent-foreground'
-                    >
-                      <div className='flex min-w-0 flex-col gap-0.5'>
-                        <p className='truncate text-sm font-medium'>
-                          {policy.title}
-                        </p>
-                        <p className='truncate text-xs text-muted-foreground'>
-                          Version {latest.version} · Updated{' '}
-                          {format(latest.publishedAt, 'MMM d, yyyy')}
-                        </p>
-                      </div>
-                      <Badge variant='outline'>
-                        {policyCategoryLabels[policy.category]}
-                      </Badge>
-                    </Link>
+                    <div className='flex items-center gap-2 px-2 py-1.5'>
+                      <Link
+                        href={paths.admin.policyDetail(policy.id)}
+                        className='flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-accent hover:text-accent-foreground'
+                      >
+                        <div className='flex min-w-0 flex-col gap-0.5'>
+                          <p className='truncate text-sm font-medium'>
+                            {policy.title}
+                          </p>
+                          <p className='truncate text-xs text-muted-foreground'>
+                            Version {latest.version} · Updated{' '}
+                            {format(latest.publishedAt, 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                        <Badge variant='outline'>
+                          {policyCategoryLabels[policy.category]}
+                        </Badge>
+                      </Link>
+                      <ConfirmDialog
+                        trigger={
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='size-8 text-destructive hover:bg-destructive/10 hover:text-destructive'
+                            aria-label={`Delete ${policy.title}`}
+                            disabled={isDeleting}
+                          >
+                            <Trash2 aria-hidden />
+                          </Button>
+                        }
+                        title={`Delete ${policy.title}?`}
+                        description='This permanently removes the policy document, every published version, and employee acknowledgment history for it.'
+                        confirmLabel='Delete policy'
+                        destructive
+                        isLoading={isDeleting}
+                        onConfirm={() => deletePolicy({ policyId: policy.id })}
+                      />
+                    </div>
                   </li>
                 );
               })}

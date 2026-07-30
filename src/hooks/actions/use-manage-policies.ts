@@ -3,7 +3,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useAction } from 'next-safe-action/hooks';
 
-import { createPolicy, publishPolicyVersion } from '@/actions/policies';
+import {
+  createPolicy,
+  deletePolicy,
+  publishPolicyVersion,
+} from '@/actions/policies';
 
 import { onError } from '@/lib/show-error-toast';
 
@@ -15,6 +19,9 @@ import { QueryKeys } from '@/constants/query-keys';
 const invalidatePolicies = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.invalidateQueries({ queryKey: [QueryKeys.POLICIES] });
   queryClient.invalidateQueries({ queryKey: [QueryKeys.ACTIVE_POLICIES] });
+  queryClient.invalidateQueries({
+    queryKey: [QueryKeys.POLICY_ACKNOWLEDGMENTS],
+  });
 };
 
 /** Create a policy and publish its version 1 (admin). The created row is handed
@@ -67,6 +74,19 @@ export function usePublishPolicyVersion(
           publishedAt: data.published_at,
         });
       }
+    },
+    onError,
+  });
+}
+
+/** Delete a policy document and refresh every view that derives policy or
+ * acknowledgment state from it. */
+export function useDeletePolicy(onSuccess?: (policyId: string) => void) {
+  const queryClient = useQueryClient();
+  return useAction(deletePolicy, {
+    onSuccess: ({ data }) => {
+      invalidatePolicies(queryClient);
+      if (data) onSuccess?.(data.id);
     },
     onError,
   });

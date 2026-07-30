@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -226,6 +225,17 @@ function HrmSettingsFields({ settings }: { settings: HrmSettings }) {
         }}
       >
         <AlertDialogContent>
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='absolute right-3 top-3 size-8'
+            onClick={() => setPendingSave(null)}
+            disabled={isPending}
+            aria-label='Close apply configuration dialog'
+          >
+            <X aria-hidden />
+          </Button>
           <AlertDialogHeader>
             <AlertDialogTitle>Apply configuration changes</AlertDialogTitle>
             <AlertDialogDescription>
@@ -251,7 +261,6 @@ function HrmSettingsFields({ settings }: { settings: HrmSettings }) {
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className='bg-secondary text-secondary-foreground hover:bg-secondary/80'
               disabled={isPending}

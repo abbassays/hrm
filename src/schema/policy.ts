@@ -27,6 +27,13 @@ export type PublishPolicyVersionInput = z.infer<
   typeof publishPolicyVersionSchema
 >;
 
+/** The policy row owns its version and acknowledgment history, which the
+ * database removes through its foreign-key cascades. */
+export const deletePolicySchema = z.object({
+  policyId: z.string().uuid(),
+});
+export type DeletePolicyInput = z.infer<typeof deletePolicySchema>;
+
 /** Acknowledgment targets a *version*, not a policy. The signed-in employee is
  * determined on the server so no employee identifier can be forged. */
 export const acknowledgePolicySchema = z.object({
