@@ -1,12 +1,14 @@
 'use client';
 
 import { Github, Mail } from 'lucide-react';
+import { useState } from 'react';
 
 import { useCurrentEmployee, useEmployees } from '@/hooks/queries/employees';
+import { useProfilePhoto } from '@/hooks/queries/onboarding';
 
 import { CopyButton } from '@/components/hrm/copy-button';
 import { EmptyState } from '@/components/hrm/empty-state';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -58,19 +60,55 @@ export function TeamDirectory() {
   );
 }
 
-function TeamMemberCard({ member, currentEmployee }: { member: EmployeeListItem; currentEmployee?: { id: string } | null }) {
+function TeamMemberCard({
+  member,
+  currentEmployee,
+}: {
+  member: EmployeeListItem;
+  currentEmployee?: { id: string } | null;
+}) {
   const isYou = currentEmployee?.id === member.id;
   const github = member.social?.github;
+  const {
+    data: profilePhoto,
+    isError,
+    isLoading: isPhotoLoading,
+  } = useProfilePhoto(member.id);
+  const [loadedPhotoUrl, setLoadedPhotoUrl] = useState<string | null>(null);
+  const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
+
+  const showInitials =
+    !profilePhoto || isError || failedPhotoUrl === profilePhoto.url;
+  const isPhotoRendered = loadedPhotoUrl === profilePhoto?.url;
 
   return (
     <Card>
       <CardContent className='flex flex-col gap-4 p-5'>
         <div className='flex items-center gap-3'>
-          <Avatar className='size-11'>
-            <AvatarFallback className='text-sm font-medium'>
-              {getInitials(member.fullName)}
-            </AvatarFallback>
-          </Avatar>
+          {isPhotoLoading ? (
+            <Skeleton className='size-11 shrink-0 rounded-full' />
+          ) : (
+            <Avatar className='size-11'>
+              {profilePhoto && !isError && (
+                <AvatarImage
+                  src={profilePhoto.url}
+                  alt={`${member.fullName} profile photo`}
+                  onLoadingStatusChange={(status) => {
+                    if (status === 'loaded')
+                      setLoadedPhotoUrl(profilePhoto.url);
+                    if (status === 'error') setFailedPhotoUrl(profilePhoto.url);
+                  }}
+                />
+              )}
+              {showInitials ? (
+                <AvatarFallback className='text-sm font-medium'>
+                  {getInitials(member.fullName)}
+                </AvatarFallback>
+              ) : !isPhotoRendered ? (
+                <Skeleton className='absolute inset-0 rounded-full' />
+              ) : null}
+            </Avatar>
+          )}
           <div className='flex min-w-0 flex-col'>
             <div className='flex items-center gap-2'>
               <span className='truncate font-medium'>{member.fullName}</span>
