@@ -1,6 +1,6 @@
 'use client';
 
-import { RotateCcw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import {
@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { onboardingSteps } from '@/constants/onboarding';
+import { paths } from '@/constants/paths';
 import {
   type BankInfoInput,
   type PersonalInfoInput,
@@ -29,7 +30,6 @@ import {
 import { BankInfoStep } from './bank-info-step';
 import { ConsentStep } from './consent-step';
 import { DocumentsStep } from './documents-step';
-import { OnboardingComplete } from './onboarding-complete';
 import { PersonalInfoStep } from './personal-info-step';
 import { SocialAccountsStep } from './social-accounts-step';
 
@@ -42,6 +42,7 @@ const succeeded = (result?: {
 
 export function OnboardingWizard() {
   const [step, setStep] = useState(0);
+  const router = useRouter();
 
   const { data: user } = useUser();
   const { data: onboarding, isLoading } = useOnboardingData();
@@ -73,20 +74,13 @@ export function OnboardingWizard() {
   };
   const handleSubmit = async () => {
     if (succeeded(await submit.executeAsync({ consent: true }))) {
-      // submit_onboarding() moved the row to `submitted` and the mirror trigger
-      // refreshed app_metadata.account_status. Pull a new access token so the
-      // middleware funnel sees `submitted` and routes to the pending page.
+      // The RPC activates the employee and mirrors that state into auth
+      // metadata. Refresh before routing so middleware sees the new access.
       await createSupabaseBrowserClient().auth.refreshSession();
-      // Show the welcome/intro screen before leaving the wizard.
-      setStep(5);
+      router.replace(paths.employee.dashboard);
+      router.refresh();
     }
   };
-
-  // Step 5 is the completion screen — no header, no step indicator, no card wrapper.
-  if (step === 5) {
-    const firstName = onboarding.personal?.fullName?.split(' ')[0];
-    return <OnboardingComplete firstName={firstName} />;
-  }
 
   return (
     <div className='flex flex-col gap-6'>
@@ -94,22 +88,6 @@ export function OnboardingWizard() {
         title='Onboarding'
         description='Complete the five sections below to activate your account.'
       />
-      {!!onboarding.reviewNote && (
-        <div className='flex gap-3 rounded-lg border border-border bg-muted/50 p-4'>
-          <RotateCcw
-            className='mt-0.5 size-5 shrink-0 text-muted-foreground'
-            aria-hidden
-          />
-          <div className='flex flex-col gap-1'>
-            <p className='text-sm font-medium'>
-              Your submission was returned for changes
-            </p>
-            <p className='text-sm text-muted-foreground'>
-              {onboarding.reviewNote}
-            </p>
-          </div>
-        </div>
-      )}
       <StepIndicator steps={[...onboardingSteps]} currentStep={step} />
       <Card>
         <CardContent className='p-6'>

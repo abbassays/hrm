@@ -10,7 +10,7 @@ export default function ApprovalsPage() {
     <>
       <PageHeader
         title='Approvals'
-        description='Review pending leave, medical, overtime, and onboarding submissions one at a time.'
+        description='Review pending leave, medical, and overtime submissions one at a time.'
       />
       <ApprovalsQueue />
     </>

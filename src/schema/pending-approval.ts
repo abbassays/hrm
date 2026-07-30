@@ -8,8 +8,8 @@ import { PendingApproval } from '@/types/hrm';
  *
  * The generated RPC type can't stand in for this, even freshly regenerated:
  * `kind` is a bare `text` column, so the generator widens it to `string` and
- * loses the four-value union, and `amount` is typed non-null even though the
- * leave, overtime and onboarding branches of the union all select `null::int`
+ * loses the three-value union, and `amount` is typed non-null even though the
+ * leave and overtime branches of the union both select `null::int`
  * (see 20260720130000_m4_pending_approvals.sql). Parsing is what actually makes
  * `PendingApproval` true of the data rather than merely asserted.
  *
@@ -20,7 +20,7 @@ import { PendingApproval } from '@/types/hrm';
  * gap into a queue-wide failure.
  */
 export const pendingApprovalSchema = z.object({
-  kind: z.enum(['leave', 'medical', 'overtime', 'onboarding']),
+  kind: z.enum(['leave', 'medical', 'overtime']),
   item_id: z.string().uuid(),
   employee_id: z.string().uuid(),
   employee_name: z

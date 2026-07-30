@@ -4,7 +4,6 @@ import {
   contactFields,
   EMERGENCY_CONTACT_DISTINCT_MESSAGE,
   phonesAreDistinct,
-  requiredString,
 } from '@/schema/common';
 
 /** UUID identifying the target employee for an admin write. */
@@ -124,10 +123,3 @@ export const personalDetailsSchema = z.object({
 });
 
 export type PersonalDetailsInput = z.infer<typeof personalDetailsSchema>;
-
-/** Admin's note when returning a submission to onboarding (BIT-10). */
-export const returnOnboardingSchema = z.object({
-  reviewNote: requiredString('A review note'),
-});
-
-export type ReturnOnboardingInput = z.infer<typeof returnOnboardingSchema>;

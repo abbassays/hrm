@@ -7,7 +7,7 @@ import { pendingApprovalsSchema } from '@/schema/pending-approval';
 
 import { PendingApproval } from '@/types/hrm';
 
-// Admin: every pending item across leave/medical/overtime/onboarding in one
+// Admin: every pending item across leave/medical/overtime in one
 // guarded round-trip, oldest first. The RPC is security definer + asserts
 // is_admin() itself (RLS is bypassed), so a non-admin gets a 42501 rather than a
 // partial read — the /admin route guard keeps them off the page in the first
@@ -23,7 +23,7 @@ const fetchPendingApprovals = authQuery(
   },
 );
 
-/** Admin: the guarded, union-normalized pending queue across all four sources.
+/** Admin: the guarded, union-normalized pending queue across all three sources.
  *  The optional guard lets shared shell components mount the hook without
  *  calling the admin-only RPC for employees. */
 export const usePendingApprovals = (enabled = true) =>

@@ -102,7 +102,6 @@ export function toEmployee(row: EmployeeRow): Employee {
     medicalCapOverride: work?.medical_cap_override ?? null,
     otMultiplierOverride: work?.ot_multiplier_override ?? null,
     status: row.account_status,
-    reviewNote: row.review_note,
     invitedAt: row.invited_at ?? '',
     joinedAt: row.activated_at,
   };

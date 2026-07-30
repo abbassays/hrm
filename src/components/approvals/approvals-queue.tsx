@@ -8,7 +8,6 @@ import {
   useAllMedicalClaims,
   useAllOvertimeLogs,
 } from '@/hooks/queries/approvals';
-import { useEmployees } from '@/hooks/queries/employees';
 import { usePendingApprovals } from '@/hooks/queries/pending-approvals';
 
 import { DetailSheet } from '@/components/hrm/detail-sheet';
@@ -27,12 +26,10 @@ import {
   fallbackToItem,
   leaveToItem,
   medicalToItem,
-  onboardingToItem,
   overtimeToItem,
 } from './approval-items';
 import { LeaveReviewActions } from './leave-review-actions';
 import { MedicalReviewActions } from './medical-review-actions';
-import { OnboardingReviewActions } from './onboarding-review-actions';
 import { OvertimeReviewActions } from './overtime-review-actions';
 
 import { type PendingApproval } from '@/types/hrm';
@@ -46,7 +43,6 @@ export function ApprovalsQueue() {
   const leave = useAllLeaveRequests();
   const medical = useAllMedicalClaims();
   const overtime = useAllOvertimeLogs();
-  const employees = useEmployees();
 
   const [tab, setTab] = useState<'all' | ApprovalKind>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -57,9 +53,8 @@ export function ApprovalsQueue() {
       leave: new Map((leave.data ?? []).map((r) => [r.id, r])),
       medical: new Map((medical.data ?? []).map((c) => [c.id, c])),
       overtime: new Map((overtime.data ?? []).map((o) => [o.id, o])),
-      employee: new Map((employees.data ?? []).map((e) => [e.id, e])),
     };
-  }, [leave.data, medical.data, overtime.data, employees.data]);
+  }, [leave.data, medical.data, overtime.data]);
 
   const enrich = useMemo(() => {
     return (row: PendingApproval): ApprovalItem => {
@@ -76,8 +71,6 @@ export function ApprovalsQueue() {
           const o = details.overtime.get(row.item_id);
           return o ? overtimeToItem(o) : fallbackToItem(row);
         }
-        case 'onboarding':
-          return onboardingToItem(row, details.employee.get(row.item_id));
       }
     };
   }, [details]);
@@ -109,14 +102,12 @@ export function ApprovalsQueue() {
       <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)}>
         <TabsList>
           <TabsTrigger value='all'>All ({items.length})</TabsTrigger>
-          {(Object.keys(approvalKindLabels) as ApprovalKind[])
-            .filter((kind) => kind !== 'onboarding')
-            .map((kind) => (
-              <TabsTrigger key={kind} value={kind}>
-                {approvalKindLabels[kind]} (
-                {items.filter((i) => i.kind === kind).length})
-              </TabsTrigger>
-            ))}
+          {(Object.keys(approvalKindLabels) as ApprovalKind[]).map((kind) => (
+            <TabsTrigger key={kind} value={kind}>
+              {approvalKindLabels[kind]} (
+              {items.filter((i) => i.kind === kind).length})
+            </TabsTrigger>
+          ))}
         </TabsList>
       </Tabs>
 
@@ -194,19 +185,11 @@ export function ApprovalsQueue() {
                 employeeName={selected.employeeName}
                 onReviewed={() => setSelectedId(null)}
               />
-            ) : selected.kind === 'overtime' ? (
+            ) : (
               // Overtime is backed by the real reviewOvertimeLog action (required
               // reason on reject + employee email); its invalidation refreshes
               // the queue.
               <OvertimeReviewActions
-                itemId={selected.id}
-                employeeName={selected.employeeName}
-                onReviewed={() => setSelectedId(null)}
-              />
-            ) : (
-              // Onboarding dispatches to approveEmployee / returnOnboarding —
-              // "reject" returns the submission with a required note.
-              <OnboardingReviewActions
                 itemId={selected.id}
                 employeeName={selected.employeeName}
                 onReviewed={() => setSelectedId(null)}

@@ -3,10 +3,8 @@
 
 import { type CustomField } from '@/schema/payroll';
 
-/** Onboarding completion moves the account to `submitted`, an admin review
- *  queue. An admin approves it (→ active) or returns it (→ onboarding) with a
- *  note (BIT-10). */
-export type AccountStatus = 'invited' | 'onboarding' | 'submitted' | 'active';
+/** Invited employees enter onboarding; completing it activates them directly. */
+export type AccountStatus = 'invited' | 'onboarding' | 'active';
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected';
 
@@ -78,8 +76,6 @@ export type Employee = {
   medicalCapOverride: number | null; // PKR
   otMultiplierOverride: number | null;
   status: AccountStatus;
-  /** Admin's note when a submission is returned to onboarding (BIT-10). */
-  reviewNote: string | null;
   invitedAt: string;
   joinedAt: string | null;
 };
@@ -146,8 +142,8 @@ export type OvertimeLog = {
   createdAt: string;
 };
 
-/** The four sources that feed the unified approvals queue (BIT-18). */
-export type ApprovalKind = 'leave' | 'medical' | 'overtime' | 'onboarding';
+/** Request sources that feed the unified admin approvals queue. */
+export type ApprovalKind = 'leave' | 'medical' | 'overtime';
 
 /** One normalized row from `pending_approvals()`. Each source projects to this
  *  common shape; `amount` is populated only for medical (whole PKR) and null for
@@ -167,7 +163,6 @@ export type DashboardSummary = {
   pendingLeave: number;
   pendingMedical: number;
   pendingOvertime: number;
-  pendingOnboarding: number;
   activeEmployees: number;
   /** Latest run's status, or null when no payroll run exists yet. */
   payrollCycle: PayrollCycleStatus | null;

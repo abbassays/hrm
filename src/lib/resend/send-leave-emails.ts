@@ -9,8 +9,8 @@ import { LeaveSubmittedEmail } from '@/emails/leave-submitted-email';
 /**
  * Transactional emails for the leave request lifecycle. Each is a pure
  * "render + send" over the shared React Email templates — recipient lookup and
- * URL building stay in the calling server action, mirroring
- * `send-onboarding-emails.ts`. Every send throws on a Resend error so callers
+ * URL building stay in the calling server action. Every send throws on a
+ * Resend error so callers
  * can swallow it: these are best-effort notifications and must never roll back
  * the DB write they follow.
  */

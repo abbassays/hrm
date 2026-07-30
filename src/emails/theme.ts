@@ -73,7 +73,7 @@ export const emailStyles: Record<string, CSSProperties> = {
     lineHeight: '24px',
     color: '#374151',
   },
-  // Definition-list style rows used to render a submitted employee's details.
+  // Definition-list style rows used in request-notification emails.
   detailRow: {
     margin: '0 0 6px',
     fontSize: '14px',

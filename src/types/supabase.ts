@@ -184,7 +184,6 @@ export type Database = {
           invited_at: string | null
           phone: string | null
           postal_code: string | null
-          review_note: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
@@ -205,7 +204,6 @@ export type Database = {
           invited_at?: string | null
           phone?: string | null
           postal_code?: string | null
-          review_note?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -226,7 +224,6 @@ export type Database = {
           invited_at?: string | null
           phone?: string | null
           postal_code?: string | null
-          review_note?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -1191,7 +1188,7 @@ export type Database = {
       }
     }
     Enums: {
-      account_status: "invited" | "onboarding" | "submitted" | "active"
+      account_status: "invited" | "onboarding" | "active"
       employment_type: "full_time" | "part_time" | "contract" | "internship"
       leave_type: "paid" | "sick" | "unpaid" | "half_day"
       medical_for: "self" | "parent" | "spouse" | "child"
@@ -1338,7 +1335,7 @@ export const Constants = {
   },
   public: {
     Enums: {
-      account_status: ["invited", "onboarding", "submitted", "active"],
+      account_status: ["invited", "onboarding", "active"],
       employment_type: ["full_time", "part_time", "contract", "internship"],
       leave_type: ["paid", "sick", "unpaid", "half_day"],
       medical_for: ["self", "parent", "spouse", "child"],

@@ -23,7 +23,6 @@ export const requestStatusLabels: Record<RequestStatus, StatusPresentation> = {
 export const accountStatusLabels: Record<AccountStatus, StatusPresentation> = {
   invited: { label: 'Invited', variant: 'outline' },
   onboarding: { label: 'Onboarding', variant: 'secondary' },
-  submitted: { label: 'In Review', variant: 'secondary' },
   active: { label: 'Active', variant: 'default' },
 };
 

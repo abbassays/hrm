@@ -1,17 +1,11 @@
 'use server';
 
 import { sendOnboardingInvite } from '@/lib/email/send-onboarding-invite';
-import {
-  sendOnboardingApprovedEmail,
-  sendOnboardingReturnedEmail,
-} from '@/lib/resend/send-onboarding-emails';
 import { authActionClient } from '@/lib/server/safe-action';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import Logger from '@/utils/logger';
 
 import { appConfig } from '@/config/app';
 import { paths } from '@/constants/paths';
-import { requiredString } from '@/schema/common';
 import {
   contactInfoWithIdSchema,
   employeeIdField,
@@ -315,97 +309,6 @@ export const deleteEmployee = authActionClient
       await supabaseAdmin.auth.admin.deleteUser(employeeId);
     if (authError) throw new Error(authError.message);
   });
-
-// ---------------------------------------------------------------------------
-// Onboarding review (BIT-10). Both actions run as the admin (RLS
-// employees_update_admin + the is_admin() branch of guard_employee_columns),
-// so the account_status write is permitted directly — no RPC. The
-// `.eq('account_status','submitted')` guard makes them idempotent: a row that
-// isn't in `submitted` matches nothing, so re-firing (or acting on a
-// non-submitted row) is a silent no-op rather than an out-of-order transition.
-// ---------------------------------------------------------------------------
-
-/** Approve a submission: → active, stamp activation, clear any prior note. */
-export const approveEmployee = authActionClient
-  .schema(employeeIdSchema)
-  .action(
-    async ({ parsedInput: { employeeId }, ctx: { supabase, authUser } }) => {
-      requireAdmin(authUser.user?.app_metadata.role);
-      const { data, error } = await supabase
-        .from('employees')
-        .update({
-          account_status: 'active',
-          activated_at: new Date().toISOString(),
-          review_note: null,
-        })
-        .eq('id', employeeId)
-        .eq('account_status', 'submitted')
-        .select('email, full_name');
-      if (error) throw new Error(error.message);
-
-      // The `submitted` guard makes this idempotent: a re-fire (or a row that
-      // already moved on) matches nothing, so `data` is empty and we email no
-      // one. Only a real transition triggers the welcome. Best-effort — a
-      // send failure is logged, never thrown back over the committed approval.
-      const approved = data?.[0];
-      if (approved) {
-        try {
-          await sendOnboardingApprovedEmail({
-            to: approved.email,
-            fullName: approved.full_name,
-            dashboardUrl: new URL(
-              paths.employee.dashboard,
-              appConfig.appUrl,
-            ).toString(),
-          });
-        } catch (emailError) {
-          Logger.error('Failed to send onboarding approval email', emailError);
-        }
-      }
-    },
-  );
-
-/** Return a submission to onboarding with a required note (the return channel
- *  the employee sees on their onboarding wizard). */
-export const returnOnboarding = authActionClient
-  .schema(
-    employeeIdSchema.extend({ reviewNote: requiredString('A review note') }),
-  )
-  .action(
-    async ({
-      parsedInput: { employeeId, reviewNote },
-      ctx: { supabase, authUser },
-    }) => {
-      requireAdmin(authUser.user?.app_metadata.role);
-      const { data, error } = await supabase
-        .from('employees')
-        .update({ account_status: 'onboarding', review_note: reviewNote })
-        .eq('id', employeeId)
-        .eq('account_status', 'submitted')
-        .select('email, full_name');
-      if (error) throw new Error(error.message);
-
-      // Idempotent like approveEmployee: no matched row → no email. The email
-      // carries the same `reviewNote` the wizard shows, so the employee has the
-      // reason in both channels. Best-effort — logged, never thrown.
-      const returned = data?.[0];
-      if (returned) {
-        try {
-          await sendOnboardingReturnedEmail({
-            to: returned.email,
-            fullName: returned.full_name,
-            reviewNote,
-            onboardingUrl: new URL(
-              paths.employee.onboarding,
-              appConfig.appUrl,
-            ).toString(),
-          });
-        } catch (emailError) {
-          Logger.error('Failed to send onboarding return email', emailError);
-        }
-      }
-    },
-  );
 
 // ---------------------------------------------------------------------------
 // Admin profile editor (BIT-10). Each write targets one satellite of an

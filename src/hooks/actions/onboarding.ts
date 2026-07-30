@@ -40,8 +40,7 @@ export function useSaveSocials() {
   return useAction(saveSocials, { onSuccess: invalidateProfile, onError });
 }
 
-/** Section 5 · Submit — sends onboarding for admin review (onboarding →
- *  submitted). */
+/** Section 5 · Complete — activates the employee (onboarding → active). */
 export function useSubmitOnboarding() {
   const invalidateProfile = useInvalidateProfile();
   return useAction(submitOnboarding, { onSuccess: invalidateProfile, onError });

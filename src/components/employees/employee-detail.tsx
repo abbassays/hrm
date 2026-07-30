@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, RotateCcw, UserX } from 'lucide-react';
+import { ArrowLeft, UserX } from 'lucide-react';
 import Link from 'next/link';
 
 import { useEmployee } from '@/hooks/queries/employees';
@@ -28,7 +28,6 @@ import { EmployeeMedicalTab } from './employee-medical-tab';
 import { EmployeeOvertimeTab } from './employee-overtime-tab';
 import { EmployeePayrollTab } from './employee-payroll-tab';
 import { EmploymentConfigForm } from './employment-config-form';
-import { EmployeeReviewActions } from './review-actions';
 
 type EmployeeDetailProps = {
   employeeId: string;
@@ -78,28 +77,8 @@ export function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
       >
         <div className='flex items-center gap-3'>
           <StatusBadge status={employee.status} />
-          {employee.status === 'submitted' && (
-            <EmployeeReviewActions employee={employee} />
-          )}
         </div>
       </PageHeader>
-
-      {!!employee.reviewNote && (
-        <div className='flex gap-3 rounded-lg border border-border bg-muted/50 p-4'>
-          <RotateCcw
-            className='mt-0.5 size-5 shrink-0 text-muted-foreground'
-            aria-hidden
-          />
-          <div className='flex flex-col gap-1'>
-            <p className='text-sm font-medium'>
-              Last returned to onboarding with this note
-            </p>
-            <p className='text-sm text-muted-foreground'>
-              {employee.reviewNote}
-            </p>
-          </div>
-        </div>
-      )}
 
       <Tabs defaultValue='profile'>
         <TabsList>

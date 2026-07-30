@@ -29,14 +29,12 @@ function isAdminRoute(pathname: string) {
   return pathname === paths.admin.dashboard || pathname.startsWith('/admin/');
 }
 
-/** The single page a not-yet-active employee is confined to, by status —
- *  onboarding until they submit, then the pending-review holding page. Active
- *  (and any unrecognised status) returns null: the full employee app is open. */
+/** Until onboarding is complete, employees are confined to the wizard. Active
+ * employees have full app access. */
 function employeeGateFor(status: AccountStatus | undefined): string | null {
   if (status === 'invited' || status === 'onboarding') {
     return paths.employee.onboarding;
   }
-  if (status === 'submitted') return paths.employee.pending;
   return null;
 }
 
@@ -109,12 +107,18 @@ export async function updateSession(request: NextRequest) {
     const status = user.app_metadata?.account_status as
       | AccountStatus
       | undefined;
-    // Admins are never gated by status; only employees funnel through
-    // onboarding/pending before the full app opens.
+    // Admins are never gated by status; employees complete onboarding before
+    // the full app opens.
     const gate = isAdmin ? null : employeeGateFor(status);
     const roleHome = isAdmin
       ? paths.admin.dashboard
       : (gate ?? paths.employee.dashboard);
+
+    // One-release compatibility for employees who were already sitting on the
+    // removed review page when the direct-activation migration ran.
+    if (pathname === '/pending') {
+      return redirectWithCookies(request, supabaseResponse, roleHome);
+    }
 
     // Signed-in users skip the root sign-in redirect and go straight to where
     // they belong right now (an admin's dashboard, or an employee's gate/app).

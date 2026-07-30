@@ -58,10 +58,7 @@ export function SummaryTiles() {
   }
 
   const pendingTotal =
-    data.pendingLeave +
-    data.pendingMedical +
-    data.pendingOvertime +
-    data.pendingOnboarding;
+    data.pendingLeave + data.pendingMedical + data.pendingOvertime;
 
   const cycle = data.payrollCycle
     ? payrollCycleStatusLabels[data.payrollCycle]
@@ -74,7 +71,7 @@ export function SummaryTiles() {
           label='Pending Approvals'
           value={pendingTotal}
           icon={CheckSquare}
-          hint='Leave, medical, overtime & onboarding'
+          hint='Leave, medical & overtime'
         />
       </Link>
 

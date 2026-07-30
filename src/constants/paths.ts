@@ -10,7 +10,6 @@ export const paths = {
   employee: {
     dashboard: '/dashboard',
     onboarding: '/onboarding',
-    pending: '/pending',
     leave: '/leave',
     medical: '/medical',
     overtime: '/overtime',

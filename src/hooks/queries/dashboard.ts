@@ -19,7 +19,6 @@ type DashboardSummaryRow = {
   pending_leave: number;
   pending_medical: number;
   pending_overtime: number;
-  pending_onboarding: number;
   active_employees: number;
   payroll_cycle: PayrollCycleStatus | null;
 };
@@ -36,7 +35,6 @@ const fetchDashboardSummary = authQuery(
       pendingLeave: row.pending_leave,
       pendingMedical: row.pending_medical,
       pendingOvertime: row.pending_overtime,
-      pendingOnboarding: row.pending_onboarding,
       activeEmployees: row.active_employees,
       payrollCycle: row.payroll_cycle,
     };
