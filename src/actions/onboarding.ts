@@ -26,7 +26,11 @@ export const acceptInvite = authActionClient
     const { error: passwordError } = await supabase.auth.updateUser({
       password,
     });
-    if (passwordError) {
+    // A prior attempt can successfully save the password but fail before the
+    // status-transition RPC. Re-sending an invite does not reset that password;
+    // accepting the same value again should therefore continue the pending
+    // lifecycle transition instead of trapping the employee on this screen.
+    if (passwordError && passwordError.code !== 'same_password') {
       throw new Error(
         'Could not set your password. The invitation link may have expired — ask your admin to resend it.',
       );

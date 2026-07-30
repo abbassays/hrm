@@ -21,6 +21,7 @@ import { ControlledPasswordInput } from '@/components/ui/form/controlled-passwor
 import { Input } from '@/components/ui/input';
 
 import { onError } from '@/lib/show-error-toast';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 import { paths } from '@/constants/paths';
 import {
@@ -46,7 +47,10 @@ export function AcceptInvitationForm({ email }: AcceptInvitationFormProps) {
   });
 
   const { execute, isPending } = useAction(acceptInvite, {
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Refresh the JWT after the acceptance RPC updates account_status in Auth
+      // metadata, before middleware evaluates the destination route.
+      await createSupabaseBrowserClient().auth.refreshSession();
       toast.success('Account created — let’s complete your onboarding');
       router.push(paths.employee.onboarding);
       router.refresh();
