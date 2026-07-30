@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { CheckCircle2, CircleDashed, Eye, History } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   Accordion,
@@ -59,12 +59,19 @@ export function PolicyVersionHistory({
   onRevert,
 }: PolicyVersionHistoryProps) {
   const newestFirst = [...versions].reverse();
+  const [openVersion, setOpenVersion] = useState(`v${currentVersionNumber}`);
   /** The version currently open in the preview dialog, if any. Policy bodies
    *  are sanitized HTML in the database, so any version renders in-app through
    *  the same component employees read — no file, no new tab. */
   const [previewVersion, setPreviewVersion] = useState<PolicyVersion | null>(
     null,
   );
+
+  // `defaultValue` is read only once. Move to the newly active version after a
+  // publish so its acknowledgment roster is visible without another click.
+  useEffect(() => {
+    setOpenVersion(`v${currentVersionNumber}`);
+  }, [currentVersionNumber]);
 
   // Matched on the version *id*: a version number is only unique within a
   // policy, and these acknowledgments arrive pre-filtered to one.
@@ -108,7 +115,8 @@ export function PolicyVersionHistory({
       <Accordion
         type='single'
         collapsible
-        defaultValue={`v${currentVersionNumber}`}
+        value={openVersion}
+        onValueChange={setOpenVersion}
         className='rounded-lg border border-border'
       >
         {newestFirst.map((version) => {

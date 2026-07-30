@@ -47,12 +47,26 @@ export function useCreatePolicy(
 
 /** Publish the next version of an existing policy (admin). The new version
  *  number comes back from the RPC — the client never computes it. */
-export function usePublishPolicyVersion(onSuccess?: (version: number) => void) {
+export function usePublishPolicyVersion(
+  onSuccess?: (version: {
+    id: string;
+    version: number;
+    contentHtml: string;
+    publishedAt: string;
+  }) => void,
+) {
   const queryClient = useQueryClient();
   return useAction(publishPolicyVersion, {
     onSuccess: ({ data }) => {
       invalidatePolicies(queryClient);
-      if (data) onSuccess?.(data.version);
+      if (data) {
+        onSuccess?.({
+          id: data.id,
+          version: data.version,
+          contentHtml: data.body_html,
+          publishedAt: data.published_at,
+        });
+      }
     },
     onError,
   });

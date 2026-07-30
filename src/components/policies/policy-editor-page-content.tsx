@@ -2,7 +2,7 @@
 
 import { ArrowLeft, FileX2, Send, Undo2 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { usePublishPolicyVersion } from '@/hooks/actions/use-manage-policies';
@@ -45,6 +45,12 @@ export function PolicyEditorPageContent({
   const { data: acknowledgments } = useAllPolicyAcknowledgments();
 
   const [draftHtml, setDraftHtml] = useState<string | null>(null);
+  // The publish RPC returns the complete new version. Retain it until the
+  // invalidated policy query contains that row, so the editor never falls back
+  // to stale content while the refetch is in flight.
+  const [justPublished, setJustPublished] = useState<PolicyVersion | null>(
+    null,
+  );
   // CKEditor's `data` prop only seeds the *initial* content — it never
   // re-syncs when the prop changes. Anything that swaps the body out from
   // under the editor therefore has to force a fresh mount, or the editor
@@ -58,11 +64,21 @@ export function PolicyEditorPageContent({
   const { execute: publish, isPending: isPublishing } = usePublishPolicyVersion(
     (version) => {
       setDraftHtml(null);
+      setJustPublished(version);
       toast.success(
-        `${policy?.title ?? 'Policy'} updated to version ${version}`,
+        `${policy?.title ?? 'Policy'} updated to version ${version.version}`,
       );
     },
   );
+
+  useEffect(() => {
+    if (
+      justPublished &&
+      policy?.versions.some((version) => version.id === justPublished.id)
+    ) {
+      setJustPublished(null);
+    }
+  }, [justPublished, policy?.versions]);
 
   if (isLoading) return <Skeleton className='h-96 rounded-xl' />;
 
@@ -76,7 +92,12 @@ export function PolicyEditorPageContent({
     );
   }
 
-  const latest = currentVersion(policy);
+  const displayedVersions =
+    justPublished &&
+    !policy.versions.some((version) => version.id === justPublished.id)
+      ? [...policy.versions, justPublished]
+      : policy.versions;
+  const latest = currentVersion({ ...policy, versions: displayedVersions });
   const content = draftHtml ?? latest.contentHtml;
   const isDirty = draftHtml !== null && draftHtml !== latest.contentHtml;
 
@@ -170,7 +191,7 @@ export function PolicyEditorPageContent({
         <h2 className='text-lg font-semibold'>Version history</h2>
         <PolicyVersionHistory
           policy={policy}
-          versions={policy.versions}
+          versions={displayedVersions}
           currentVersionNumber={latest.version}
           employees={employees ?? []}
           acknowledgments={(acknowledgments ?? []).filter(
