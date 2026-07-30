@@ -62,11 +62,13 @@ export function ResetPasswordForm() {
             <ControlledPasswordInput<ResetPasswordInput>
               name='password'
               label='New password'
+              autoComplete='new-password'
               placeholder='••••••••'
             />
             <ControlledPasswordInput<ResetPasswordInput>
               name='confirmPassword'
               label='Confirm password'
+              autoComplete='new-password'
               placeholder='••••••••'
               hideInstructions
             />

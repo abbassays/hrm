@@ -77,11 +77,13 @@ export function AcceptInvitationForm({ email }: AcceptInvitationFormProps) {
             <ControlledPasswordInput<AcceptInvitationInput>
               name='password'
               label='Password'
+              autoComplete='new-password'
               placeholder='••••••••'
             />
             <ControlledPasswordInput<AcceptInvitationInput>
               name='confirmPassword'
               label='Confirm password'
+              autoComplete='new-password'
               placeholder='••••••••'
               hideInstructions
             />

@@ -31,6 +31,7 @@ type ControlledPasswordInputProps<TFormValues extends FieldValues> = {
   label?: string;
   className?: string;
   placeholder?: string;
+  autoComplete?: string;
   hideInstructions?: boolean;
 };
 
@@ -40,6 +41,7 @@ export const ControlledPasswordInput = <TFormValues extends FieldValues>({
   containerClassName,
   label,
   placeholder,
+  autoComplete,
   hideInstructions,
 }: ControlledPasswordInputProps<TFormValues>) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -90,15 +92,16 @@ export const ControlledPasswordInput = <TFormValues extends FieldValues>({
               <Input
                 {...field}
                 type={showPassword ? 'text' : 'password'}
-                className={cn(className)}
+                className={cn('pr-12', className)}
                 placeholder={placeholder}
+                autoComplete={autoComplete}
                 value={field.value as string}
               />
               <Button
                 type='button'
                 variant='ghost'
                 size='icon'
-                className='absolute right-1 top-0.5 w-8'
+                className='absolute inset-y-0 right-0 h-auto w-11 rounded-l-none rounded-r-md'
                 onClick={togglePasswordVisibility}
               >
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
