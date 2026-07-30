@@ -10,6 +10,22 @@ const DEFAULT_BODY =
   'set up your account and complete onboarding.</p>' +
   '<p><a href="{{onboarding_link}}">Accept your invitation</a></p>';
 
+const INVITE_BUTTON_STYLE =
+  'display:inline-block;background-color:#04CD77;color:#ffffff;' +
+  'font-size:15px;font-weight:600;line-height:20px;text-decoration:none;' +
+  'border-radius:8px;padding:13px 28px;';
+
+/** Turn the required invitation link into the primary CTA. This runs after the
+ * admin-authored body was sanitized, so only the trusted wrapper/style is
+ * introduced here; the link text remains the admin's sanitized HTML. */
+function styleOnboardingLink(bodyHtml: string) {
+  return bodyHtml.replace(
+    /<p>\s*<a\b([^>]*\bhref=["']\{\{onboarding_link\}\}["'][^>]*)>([\s\S]*?)<\/a>\s*<\/p>/gi,
+    (_match, attributes: string, label: string) =>
+      `<p style="margin:28px 0 8px;text-align:center;"><a ${attributes} style="${INVITE_BUTTON_STYLE}">${label}</a></p>`,
+  );
+}
+
 type OnboardingTemplateRow = {
   subject: string | null;
   body_html: string | null;
@@ -46,7 +62,7 @@ export function renderOnboardingEmail(
     .replaceAll('{{onboarding_link}}', vars.onboardingLink)
     .replaceAll('{{employee_name}}', vars.employeeName);
 
-  const html = rawBody
+  const html = styleOnboardingLink(rawBody)
     .replaceAll('{{onboarding_link}}', escapeHtml(vars.onboardingLink))
     .replaceAll('{{employee_name}}', escapeHtml(vars.employeeName));
 
