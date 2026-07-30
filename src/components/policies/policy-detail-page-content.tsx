@@ -62,14 +62,12 @@ export function PolicyDetailPageContent({
   // acknowledgment of the version on screen counts.
   const upToDate = hasAcknowledged(acknowledgments ?? [], latest.id);
 
-  // Diffed against whatever version the employee last acknowledged (not
-  // necessarily the immediately-previous one, if they skipped an update),
-  // so the highlighting always reflects everything new to them.
+  // Show what changed in the most recently published update, independent of
+  // each employee's acknowledgment history.
   const previousVersion = policy.versions.at(-2);
-  const displayHtml =
-    previousVersion
-      ? highlightChangedBlocks(previousVersion.contentHtml, latest.contentHtml)
-      : latest.contentHtml;
+  const displayHtml = previousVersion
+    ? highlightChangedBlocks(previousVersion.contentHtml, latest.contentHtml)
+    : latest.contentHtml;
   const diffSummary = previousVersion
     ? getPolicyDiffSummary(previousVersion.contentHtml, latest.contentHtml)
     : 0;
@@ -130,8 +128,7 @@ export function PolicyDetailPageContent({
               <Megaphone className='size-4 shrink-0' aria-hidden />
               <span>
                 {diffSummary} change{diffSummary === 1 ? '' : 's'} since the
-                previous version 
-                .
+                previous version.
               </span>
             </div>
           )}
