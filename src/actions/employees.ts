@@ -400,3 +400,21 @@ export const updateEmploymentDetails = authActionClient
     });
     if (error) throw new Error(error.message);
   });
+
+/** Clears only the employee-specific allowance values so the balance logic
+ * resumes inheriting the company-wide settings. */
+export const resetEmployeeAllowanceOverrides = authActionClient
+  .schema(employeeIdSchema)
+  .action(async ({ parsedInput: { employeeId }, ctx: { supabase, authUser } }) => {
+    requireAdmin(authUser.user?.app_metadata.role);
+    const { error } = await supabase
+      .from('employment_details')
+      .update({
+        leave_pool_days_override: null,
+        medical_accrual_monthly_override: null,
+        medical_cap_override: null,
+        ot_multiplier_override: null,
+      })
+      .eq('employee_id', employeeId);
+    if (error) throw new Error(error.message);
+  });

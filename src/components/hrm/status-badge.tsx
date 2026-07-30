@@ -21,6 +21,11 @@ type StatusBadgeProps = {
 /** Single mapping from any HRM status to a badge, so colors and labels stay
  *  consistent across modules. */
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const { label, variant } = presentations[status];
+  // A status can briefly outlive a client deploy while a database migration is
+  // rolling out. Render it safely instead of taking down the whole table.
+  const { label, variant } = presentations[status] ?? {
+    label: status.replace(/_/g, ' '),
+    variant: 'secondary' as const,
+  };
   return <Badge variant={variant}>{label}</Badge>;
 }

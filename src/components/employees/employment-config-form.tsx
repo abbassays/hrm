@@ -4,7 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { useUpdateEmploymentDetails } from '@/hooks/actions/use-update-employee';
+import {
+  useResetEmployeeAllowanceOverrides,
+  useUpdateEmploymentDetails,
+} from '@/hooks/actions/use-update-employee';
 import { useHrmSettings } from '@/hooks/queries/settings';
 
 import { Button } from '@/components/ui/button';
@@ -71,6 +74,14 @@ export function EmploymentConfigForm({ employee }: EmploymentConfigFormProps) {
   const { execute, isPending } = useUpdateEmploymentDetails(employee.id, () =>
     toast.success('Employment configuration saved'),
   );
+  const { execute: resetOverrides, isPending: isResetting } =
+    useResetEmployeeAllowanceOverrides(employee.id, () => {
+      form.setValue('leavePoolDaysOverride', '', { shouldDirty: false });
+      form.setValue('medicalAccrualMonthlyOverride', '', { shouldDirty: false });
+      form.setValue('medicalCapOverride', '', { shouldDirty: false });
+      form.setValue('otMultiplierOverride', '', { shouldDirty: false });
+      toast.success('Allowance overrides reset to the global settings');
+    });
 
   const onSubmit = (values: EmploymentConfigValues) =>
     execute({ ...values, employeeId: employee.id });
@@ -281,9 +292,20 @@ export function EmploymentConfigForm({ employee }: EmploymentConfigFormProps) {
             />
 
             <div className='sm:col-span-2'>
-              <Button type='submit' isLoading={isPending}>
-                Save configuration
-              </Button>
+              <div className='flex flex-wrap gap-3'>
+                <Button type='submit' isLoading={isPending} disabled={isResetting}>
+                  Save configuration
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  isLoading={isResetting}
+                  disabled={isPending}
+                  onClick={() => resetOverrides({ employeeId: employee.id })}
+                >
+                  Reset overrides to defaults
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
