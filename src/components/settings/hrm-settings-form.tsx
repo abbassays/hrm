@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SlidersHorizontal } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -9,6 +10,16 @@ import { useUpdatePayrollSettings } from '@/hooks/actions/use-update-payroll-set
 import { useHrmSettings } from '@/hooks/queries/settings';
 
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Form,
   FormControl,
@@ -42,6 +53,7 @@ export function HrmSettingsForm() {
 }
 
 function HrmSettingsFields({ settings }: { settings: HrmSettings }) {
+  const [pendingSave, setPendingSave] = useState<HrmSettingsInput | null>(null);
   const form = useForm<HrmSettingsInput>({
     resolver: zodResolver(hrmSettingsSchema),
     defaultValues: settings,
@@ -55,7 +67,13 @@ function HrmSettingsFields({ settings }: { settings: HrmSettings }) {
     toast.success('Configuration saved'),
   );
 
-  const onSubmit = (values: HrmSettingsInput) => execute(values);
+  const onSubmit = (values: HrmSettingsInput) => setPendingSave(values);
+
+  const applySettings = (employeeScope: 'defaults' | 'all') => {
+    if (!pendingSave) return;
+    execute({ ...pendingSave, employeeScope });
+    setPendingSave(null);
+  };
 
   return (
     <Form {...form}>
@@ -201,6 +219,55 @@ function HrmSettingsFields({ settings }: { settings: HrmSettings }) {
           </SettingsGroup>
         </SettingsCard>
       </form>
+      <AlertDialog
+        open={pendingSave !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingSave(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apply configuration changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose whether these settings should preserve employee-specific
+              allowance overrides or replace them.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className='space-y-3 text-sm'>
+            <div>
+              <p className='font-medium'>Only employees using defaults</p>
+              <p className='text-muted-foreground'>
+                Preserve manually configured leave, medical, and overtime
+                values. Employees without overrides automatically receive the
+                new company settings.
+              </p>
+            </div>
+            <div>
+              <p className='font-medium'>All employees</p>
+              <p className='text-muted-foreground'>
+                Replace every employee&apos;s leave, medical, and overtime
+                configuration with the values above, including manual changes.
+              </p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              disabled={isPending}
+              onClick={() => applySettings('defaults')}
+            >
+              Apply to defaults only
+            </AlertDialogAction>
+            <AlertDialogAction
+              disabled={isPending}
+              onClick={() => applySettings('all')}
+            >
+              Apply to all employees
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Form>
   );
 }

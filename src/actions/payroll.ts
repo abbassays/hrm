@@ -93,7 +93,11 @@ async function dispatchInvoices(payslipIds: string[]) {
             notification_last_error: null,
           })
           .eq('id', row.id);
-        if (updateErr) Logger.error('Failed to update payslip notification status', updateErr.message);
+        if (updateErr)
+          Logger.error(
+            'Failed to update payslip notification status',
+            updateErr.message,
+          );
       } else {
         failed += 1;
         const errorText = (res as PromiseRejectedResult).reason?.message
@@ -107,7 +111,11 @@ async function dispatchInvoices(payslipIds: string[]) {
             notification_last_error: errorText.slice(0, 1024),
           })
           .eq('id', row.id);
-        if (updateErr) Logger.error('Failed to update payslip notification status', updateErr.message);
+        if (updateErr)
+          Logger.error(
+            'Failed to update payslip notification status',
+            updateErr.message,
+          );
       }
     } catch (e) {
       Logger.error('Error updating payslip notification status', e);
@@ -115,7 +123,9 @@ async function dispatchInvoices(payslipIds: string[]) {
   }
 
   const failures = results.filter((r) => r.status === 'rejected');
-  failures.forEach((failure) => Logger.error('Failed to send invoice email', failure));
+  failures.forEach((failure) =>
+    Logger.error('Failed to send invoice email', failure),
+  );
 
   return { sent, failed };
 }
@@ -149,13 +159,54 @@ export const updatePayrollSettings = authActionClient
     if (parsedInput.taxRatePercent !== undefined)
       patch.tax_rate_percent = parsedInput.taxRatePercent;
 
+    const employeeScope = parsedInput.employeeScope ?? 'defaults';
+
     const { error } = await supabase
       .from('payroll_settings')
       .update(patch)
       .eq('id', true);
     if (error) throw new Error(error.message);
 
-    return { updated: Object.keys(patch) };
+    // Employees with null allowance fields automatically inherit the global
+    // settings above. An admin can instead explicitly replace every employee's
+    // per-employee allowances with these values.
+    let employeesUpdated = 0;
+    if (employeeScope === 'all') {
+      if (
+        parsedInput.leavePoolDays === undefined ||
+        parsedInput.medicalMonthlyAccrual === undefined ||
+        parsedInput.medicalBalanceCap === undefined ||
+        parsedInput.overtimeMultiplier === undefined
+      ) {
+        throw new Error(
+          'All allowance settings are required when applying them to every employee.',
+        );
+      }
+
+      const { data: employees, error: employeesError } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('role', 'employee');
+      if (employeesError) throw new Error(employeesError.message);
+
+      const rows = (employees ?? []).map((employee) => ({
+        employee_id: employee.id,
+        leave_pool_days_override: parsedInput.leavePoolDays,
+        medical_accrual_monthly_override: parsedInput.medicalMonthlyAccrual,
+        medical_cap_override: parsedInput.medicalBalanceCap,
+        ot_multiplier_override: parsedInput.overtimeMultiplier,
+      }));
+
+      if (rows.length > 0) {
+        const { error: overridesError } = await supabase
+          .from('employment_details')
+          .upsert(rows, { onConflict: 'employee_id' });
+        if (overridesError) throw new Error(overridesError.message);
+      }
+      employeesUpdated = rows.length;
+    }
+
+    return { updated: Object.keys(patch), employeesUpdated, employeeScope };
   });
 
 /**

@@ -18,6 +18,9 @@ export const updatePayrollSettingsSchema = z
     leavePoolDays: z.coerce.number().int().nonnegative(),
     medicalMonthlyAccrual: z.coerce.number().int().nonnegative(),
     medicalBalanceCap: z.coerce.number().int().nonnegative(),
+    // "defaults" preserves employee-specific allowance overrides; "all"
+    // replaces them with the new company configuration.
+    employeeScope: z.enum(['defaults', 'all']).default('defaults'),
   })
   .partial();
 
