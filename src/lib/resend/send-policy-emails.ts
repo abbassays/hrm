@@ -12,6 +12,19 @@ type SendPolicyUpdatedEmailInput = {
   policyUrl: string;
 };
 
+// Seed/demo employee records use IANA-reserved example domains. They cannot
+// receive mail, and Resend's test environment rejects them before delivery.
+const RESERVED_EMAIL_DOMAINS = new Set([
+  'example.com',
+  'example.net',
+  'example.org',
+]);
+
+const isReservedEmail = (email: string) =>
+  RESERVED_EMAIL_DOMAINS.has(
+    email.trim().split('@').at(-1)?.toLowerCase() ?? '',
+  );
+
 /** Sends a concise policy-update email. Change details deliberately remain in
  * the policy document itself rather than being repeated in email. */
 export async function sendPolicyUpdatedEmail({
@@ -20,6 +33,8 @@ export async function sendPolicyUpdatedEmail({
   policyTitle,
   policyUrl,
 }: SendPolicyUpdatedEmailInput) {
+  if (isReservedEmail(to)) return;
+
   const { error } = await resend.emails.send({
     from: appConfig.emails.sender,
     replyTo: appConfig.emails.support,
