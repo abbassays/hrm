@@ -79,12 +79,10 @@ export function ProfileView({
         <StatusBadge status={employee.status} />
       </PageHeader>
 
-      {showDocuments && (
-        <ProfilePhotoCard
-          employeeId={employee.id}
-          fullName={employee.fullName || employee.email}
-        />
-      )}
+      <ProfilePhotoCard
+        employeeId={employee.id}
+        fullName={employee.fullName || employee.email}
+      />
 
       <InfoCard
         title='Contact Information'
