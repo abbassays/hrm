@@ -42,22 +42,38 @@ export function SocialAccountsStep({
         onSubmit={form.handleSubmit(onNext)}
         className='flex flex-col gap-4'
       >
-        {socialAccountsFields.map(({ name, label, placeholder }) => (
-          <FormField
-            key={name}
-            control={form.control}
-            name={name}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{label}</FormLabel>
-                <FormControl>
-                  <Input placeholder={placeholder} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ))}
+        {socialAccountsFields.map(({ name, label, placeholder }) => {
+          const isRequired = name === 'github';
+
+          return (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {label}
+                    {isRequired && (
+                      <span className='ml-0.5 text-destructive' aria-hidden>
+                        *
+                      </span>
+                    )}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={placeholder}
+                      required={isRequired}
+                      aria-required={isRequired}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          );
+        })}
         <div className='flex justify-between'>
           <Button type='button' variant='outline' onClick={onBack}>
             Back
