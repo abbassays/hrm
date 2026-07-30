@@ -47,7 +47,7 @@ function EmployeeDashboardCard({
   actionLabel,
 }: EmployeeDashboardCardProps) {
   return (
-    <Card className='flex h-full min-h-[19.5rem] flex-col'>
+    <Card className='flex h-full min-h-64 flex-col'>
       <CardHeader className='pb-4'>
         <div className='flex items-start justify-between gap-4'>
           <CardTitle className='text-sm font-medium text-muted-foreground'>
@@ -150,9 +150,9 @@ export function EmployeeBalances() {
   if (leaveLoading || medicalLoading || !leaveBalance || !medicalBalance) {
     return (
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-        <Skeleton className='h-[19.5rem] rounded-xl' />
-        <Skeleton className='h-[19.5rem] rounded-xl' />
-        <Skeleton className='h-[19.5rem] rounded-xl' />
+        <Skeleton className='h-64 rounded-xl' />
+        <Skeleton className='h-64 rounded-xl' />
+        <Skeleton className='h-64 rounded-xl' />
       </div>
     );
   }
