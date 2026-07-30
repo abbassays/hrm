@@ -130,14 +130,7 @@ export function PolicyDetailPageContent({
               <Megaphone className='size-4 shrink-0' aria-hidden />
               <span>
                 {diffSummary} change{diffSummary === 1 ? '' : 's'} since the
-                previous version — additions in{' '}
-                <span className='font-medium text-green-700 dark:text-green-400'>
-                  green
-                </span>
-                , removals in{' '}
-                <span className='font-medium text-red-700 dark:text-red-400'>
-                  red
-                </span>
+                previous version 
                 .
               </span>
             </div>
