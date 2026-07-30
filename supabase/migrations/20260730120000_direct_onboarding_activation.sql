@@ -12,6 +12,10 @@ where type = 'onboarding_submitted';
 
 -- Existing employees waiting for review must not be stranded when the state is
 -- removed. Activate them and mirror the new status into their next JWT.
+-- The employee-column guard deliberately protects account_status from ordinary
+-- writes. Scope its established bypass to this migration transaction only.
+select set_config('app.bypass_employee_guard', 'on', true);
+
 with activated as (
   update public.employees
      set account_status = 'active',
@@ -138,6 +142,10 @@ grant execute on function public.pending_approvals() to authenticated;
 drop function if exists public.accept_onboarding();
 drop function if exists public.submit_onboarding();
 
+-- This trigger depends on the account_status column type. Preserve its
+-- role/status JWT mirroring behavior across the enum replacement below.
+drop trigger if exists trg_employees_mirror_role on public.employees;
+
 -- PostgreSQL enum values cannot be removed in place. All submitted rows were
 -- migrated above, so recreate the type with only reachable lifecycle states.
 alter table public.employees
@@ -162,6 +170,10 @@ drop type public.account_status_with_review;
 
 alter table public.employees
   drop column if exists review_note;
+
+create trigger trg_employees_mirror_role
+after insert or update of role, account_status on public.employees
+for each row execute function public.mirror_role_to_jwt();
 
 -- Caller-only, idempotent invite acceptance.
 create function public.accept_onboarding()
