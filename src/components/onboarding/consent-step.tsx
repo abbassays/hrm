@@ -37,8 +37,8 @@ export function ConsentStep({ onSubmit, onBack }: ConsentStepProps) {
         className='flex flex-col gap-6'
       >
         <p className='text-sm text-muted-foreground'>
-          Check your details in the previous steps, then confirm below to submit
-          your onboarding for admin review.
+          Check your details in the previous steps, then confirm below to
+          complete your onboarding.
         </p>
         <FormField
           control={form.control}
@@ -73,7 +73,7 @@ export function ConsentStep({ onSubmit, onBack }: ConsentStepProps) {
             disabled={!consented}
             isLoading={form.formState.isSubmitting}
           >
-            Submit for review
+            Submit
           </Button>
         </div>
       </form>

@@ -69,11 +69,13 @@ function EmployeeDashboardCard({
             value={progress}
             aria-label={progressLabel}
           />
-        ) : (
+        ) : status ? (
           <p className='mt-5 flex h-4 items-center gap-2 text-xs text-muted-foreground'>
             <span className='size-2 rounded-full bg-primary' aria-hidden />
             {status}
           </p>
+        ) : (
+          <div className='mt-5 h-4' />
         )}
         <div className='mt-auto border-t pt-4'>
           {actionLabel ? (
@@ -177,11 +179,11 @@ export function EmployeeBalances() {
         progressLabel={`${formatCurrency(medicalBalance.accrued)} available of ${formatCurrency(medicalBalance.cap)}`}
         footer={`${formatCurrency(medicalRemaining)} remaining · ${formatCurrency(medicalBalance.monthlyAccrual)}/month`}
       />
-      {!!latestPayslip && (
-        <Link
-          href={paths.employee.payslips}
-          className='block h-full rounded-xl transition-shadow hover:shadow-md'
-        >
+      <Link
+        href={paths.employee.payslips}
+        className='block h-full rounded-xl transition-shadow hover:shadow-md'
+      >
+        {latestPayslip ? (
           <EmployeeDashboardCard
             value={formatCurrency(latestPayslip.total)}
             icon={Receipt}
@@ -191,8 +193,17 @@ export function EmployeeBalances() {
             footer=''
             actionLabel='View payslip'
           />
-        </Link>
-      )}
+        ) : (
+          <EmployeeDashboardCard
+            value='No payslip yet'
+            icon={Receipt}
+            title='Latest Payslip'
+            secondary='Your first payslip will appear once a payroll cycle is locked.'
+            footer=''
+            actionLabel='View payslips'
+          />
+        )}
+      </Link>
     </div>
   );
 }
