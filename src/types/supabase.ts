@@ -697,6 +697,7 @@ export type Database = {
           custom_fields: Json
           days_in_month: number
           days_worked: number
+          days_worked_override: number | null
           designation: string | null
           employee_id: string
           id: string
@@ -708,6 +709,7 @@ export type Database = {
           overtime_hours: number
           overtime_hours_override: number | null
           overtime_multiplier: number | null
+          overtime_multiplier_override: number | null
           overtime_pay: number
           overtime_rate: number
           payroll_run_id: string
@@ -724,6 +726,7 @@ export type Database = {
           custom_fields?: Json
           days_in_month: number
           days_worked: number
+          days_worked_override?: number | null
           designation?: string | null
           employee_id: string
           id?: string
@@ -735,6 +738,7 @@ export type Database = {
           overtime_hours?: number
           overtime_hours_override?: number | null
           overtime_multiplier?: number | null
+          overtime_multiplier_override?: number | null
           overtime_pay?: number
           overtime_rate?: number
           payroll_run_id: string
@@ -751,6 +755,7 @@ export type Database = {
           custom_fields?: Json
           days_in_month?: number
           days_worked?: number
+          days_worked_override?: number | null
           designation?: string | null
           employee_id?: string
           id?: string
@@ -762,6 +767,7 @@ export type Database = {
           overtime_hours?: number
           overtime_hours_override?: number | null
           overtime_multiplier?: number | null
+          overtime_multiplier_override?: number | null
           overtime_pay?: number
           overtime_rate?: number
           payroll_run_id?: string

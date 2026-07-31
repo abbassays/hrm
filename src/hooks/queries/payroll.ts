@@ -87,6 +87,8 @@ export type RunPayslipRow = {
   baseSalary: number;
   daysInMonth: number;
   daysWorked: number;
+  /** Null means days worked follows approved unpaid leave. */
+  daysWorkedOverride: number | null;
   unpaidLeaveDays: number;
   totalBase: number;
   medical: number;
@@ -97,6 +99,8 @@ export type RunPayslipRow = {
    *  when an admin has overridden it. Drives the grid's "reset to logs" affordance. */
   overtimeHoursOverride: number | null;
   overtimeMultiplier: number;
+  /** Null means the current employee/company multiplier is authoritative. */
+  overtimeMultiplierOverride: number | null;
   overtimeRate: number;
   overtimePay: number;
   taxDeduction: number;
@@ -118,6 +122,10 @@ function toRunPayslipRow(row: PayslipDbRow): RunPayslipRow {
     baseSalary: row.base_salary,
     daysInMonth: row.days_in_month,
     daysWorked: Number(row.days_worked),
+    daysWorkedOverride:
+      row.days_worked_override === null
+        ? null
+        : Number(row.days_worked_override),
     unpaidLeaveDays: Number(row.unpaid_leave_days),
     totalBase: row.total_base,
     medical: row.medical,
@@ -132,6 +140,10 @@ function toRunPayslipRow(row: PayslipDbRow): RunPayslipRow {
     overtimeMultiplier: row.overtime_multiplier
       ? Number(row.overtime_multiplier)
       : 0,
+    overtimeMultiplierOverride:
+      row.overtime_multiplier_override === null
+        ? null
+        : Number(row.overtime_multiplier_override),
     overtimeRate: Number(row.overtime_rate),
     overtimePay: row.overtime_pay,
     taxDeduction: row.tax_deduction,
@@ -170,8 +182,8 @@ export const runRowToPayslip = (row: RunPayslipRow): Payslip => ({
 const fetchRunPayslips = authQuery(
   async ({ supabase, params }) => {
     const { data, error } = await supabase
-        .from('payslips')
-        .select('*, employees(full_name)')
+      .from('payslips')
+      .select('*, employees(full_name)')
       .eq('payroll_run_id', params.runId);
     if (error) throw new Error(error.message);
     return data

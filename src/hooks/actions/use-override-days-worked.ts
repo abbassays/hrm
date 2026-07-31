@@ -9,8 +9,7 @@ import { onError } from '@/lib/show-error-toast';
 
 import { QueryKeys } from '@/constants/query-keys';
 
-/** Set an inline days-worked override on a payslip and recalc the run (admin).
- *  Invalidates the run's payslips and the run list so the recomputed totals show. */
+/** Set or clear an inline days-worked override and recalc the run (admin). */
 export function useOverrideDaysWorked(onSuccess?: () => void) {
   const queryClient = useQueryClient();
   return useAction(overrideDaysWorked, {

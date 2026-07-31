@@ -13,7 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import { formatCurrency } from '@/utils/number-functions';
 
@@ -30,8 +34,8 @@ type PayslipGridProps = {
   selectedIds: Set<string>;
   onToggleRow: (payslipId: string) => void;
   onToggleAll: () => void;
-  onDaysWorkedCommit: (payslipId: string, daysWorked: number) => void;
-  onOtMultiplierCommit: (payslipId: string, multiplier: number) => void;
+  onDaysWorkedCommit: (payslipId: string, daysWorked: number | null) => void;
+  onOtMultiplierCommit: (payslipId: string, multiplier: number | null) => void;
   /** `null` clears the override, handing the hours back to the approved logs. */
   onOtHoursCommit: (payslipId: string, hours: number | null) => void;
   onAddCustomField: (
@@ -140,7 +144,7 @@ export function CurrentCycleTable({
                     />
                   ) : null}
                 </TableCell>
-                
+
                 <TableCell className='font-medium'>
                   {row.employeeName || '—'}
                 </TableCell>
@@ -154,17 +158,38 @@ export function CurrentCycleTable({
                   {locked ? (
                     `${row.overtimeMultiplier}x`
                   ) : (
-                    <EditableNumberCell
-                      value={row.overtimeMultiplier}
-                      min={0}
-                      max={9.99}
-                      step={0.1}
-                      disabled={isBusy}
-                      ariaLabel={`Overtime multiplier for ${row.employeeName}`}
-                      onCommit={(multiplier) =>
-                        onOtMultiplierCommit(row.id, multiplier)
-                      }
-                    />
+                    <div className='flex items-center justify-center gap-1'>
+                      <EditableNumberCell
+                        value={row.overtimeMultiplier}
+                        min={0}
+                        max={9.99}
+                        step={0.1}
+                        disabled={isBusy}
+                        ariaLabel={`Overtime multiplier for ${row.employeeName}`}
+                        onCommit={(multiplier) =>
+                          onOtMultiplierCommit(row.id, multiplier)
+                        }
+                      />
+                      {row.overtimeMultiplierOverride !== null && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-7 w-7 text-muted-foreground'
+                              disabled={isBusy}
+                              aria-label={`Reset overtime multiplier for ${row.employeeName} to employee configuration`}
+                              onClick={() => onOtMultiplierCommit(row.id, null)}
+                            >
+                              <RotateCcw />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Overridden — reset to employee configuration
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
                   )}
                 </TableCell>
                 <TableCell className='text-center'>
@@ -240,17 +265,38 @@ export function CurrentCycleTable({
                     </span>
                   ) : (
                     <div className='flex flex-col items-center gap-0.5'>
-                      <EditableNumberCell
-                        value={unpaidDays}
-                        min={0}
-                        max={row.daysInMonth}
-                        step={0.5}
-                        disabled={isBusy}
-                        ariaLabel={`Unpaid days for ${row.employeeName}`}
-                        onCommit={(unpaid) =>
-                          onDaysWorkedCommit(row.id, row.daysInMonth - unpaid)
-                        }
-                      />
+                      <div className='flex items-center justify-center gap-1'>
+                        <EditableNumberCell
+                          value={unpaidDays}
+                          min={0}
+                          max={row.daysInMonth}
+                          step={0.5}
+                          disabled={isBusy}
+                          ariaLabel={`Unpaid days for ${row.employeeName}`}
+                          onCommit={(unpaid) =>
+                            onDaysWorkedCommit(row.id, row.daysInMonth - unpaid)
+                          }
+                        />
+                        {row.daysWorkedOverride !== null && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant='ghost'
+                                size='icon'
+                                className='h-7 w-7 text-muted-foreground'
+                                disabled={isBusy}
+                                aria-label={`Reset unpaid days for ${row.employeeName} to approved leave`}
+                                onClick={() => onDaysWorkedCommit(row.id, null)}
+                              >
+                                <RotateCcw />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Overridden — reset to approved leave
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
                       <span className='text-xs text-muted-foreground'>
                         {formatCurrency(unpaidDeduction) || 'No deduction'}
                       </span>

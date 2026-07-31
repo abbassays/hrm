@@ -200,7 +200,7 @@ export function PayrollCyclePageContent({
                     </Button>
                   }
                   title='Reopen this payroll run?'
-                  description='The run returns to editable: figures unfreeze, the swept medical and overtime are released back to the pool, and employees can no longer see their payslips. Finalize again to lock it.'
+                  description='The run returns to editable and is recalculated from current employee configuration. Swept medical and overtime return to the pool, and employees can no longer see their payslips. Finalize again to lock it.'
                   confirmLabel='Reopen run'
                   destructive
                   isLoading={unlock.isPending}

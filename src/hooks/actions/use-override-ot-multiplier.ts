@@ -9,8 +9,7 @@ import { onError } from '@/lib/show-error-toast';
 
 import { QueryKeys } from '@/constants/query-keys';
 
-/** Set a per-payslip OT-multiplier override (single or bulk) and recalc the run.
- *  Invalidates the run's payslips and the run list so the new totals show. */
+/** Set or clear a per-payslip OT-multiplier override and recalc the run. */
 export function useOverrideOtMultiplier(onSuccess?: () => void) {
   const queryClient = useQueryClient();
   return useAction(overrideOtMultiplier, {

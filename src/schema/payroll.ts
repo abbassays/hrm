@@ -41,22 +41,20 @@ export const runIdSchema = z.object({
 });
 export type RunIdInput = z.infer<typeof runIdSchema>;
 
-/** Inline per-employee days-worked override. Bounded 0..31 (a real month never
- *  exceeds 31 days); the run's actual `days_in_month` is the effective ceiling,
- *  enforced by the UI and re-derived by the recalc that follows. */
+/** Inline per-employee days-worked override. `null` clears the override and
+ *  returns the row to its approved-unpaid-leave-derived value. */
 export const overrideDaysWorkedSchema = z.object({
   payslip_id: z.string().uuid(),
-  days_worked: z.coerce.number().nonnegative().max(31),
+  days_worked: z.coerce.number().nonnegative().max(31).nullable(),
 });
 export type OverrideDaysWorkedInput = z.infer<typeof overrideDaysWorkedSchema>;
 
-/** Per-payslip overtime-multiplier override. Applies to one or many payslips of
- *  the same run (single-row edit passes one id; the bulk popover passes many),
- *  then a single recalc refreshes the dependent OT rate/pay/tax/net. */
+/** Per-payslip overtime-multiplier override. `null` clears it so the current
+ *  employee override (or company default) is used again. */
 export const overrideOtMultiplierSchema = z.object({
   run_id: z.string().uuid(),
   payslip_ids: z.array(z.string().uuid()).min(1),
-  overtime_multiplier: z.coerce.number().nonnegative().max(9.99),
+  overtime_multiplier: z.coerce.number().nonnegative().max(9.99).nullable(),
 });
 export type OverrideOtMultiplierInput = z.infer<
   typeof overrideOtMultiplierSchema

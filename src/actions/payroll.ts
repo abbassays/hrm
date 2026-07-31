@@ -285,11 +285,9 @@ export const lockPayroll = authActionClient
   });
 
 /**
- * Reopen a locked run — the transactional reverse of `lockPayroll`. Releases the
- * medical/OT this run swept back to the pool, clears the frozen total, and flips
- * `locked → open` so the figures are editable and recalculable again. Employees
- * stop seeing their payslips automatically (RLS scopes them to locked runs). The
- * RPC refuses a run that isn't locked (55000).
+ * Reopen and atomically recalculate a locked run. The RPC releases swept items,
+ * clears lock metadata, refreshes payslips from current employee configuration,
+ * and refuses a run that is not locked (55000).
  */
 export const unlockPayroll = authActionClient
   .schema(runIdSchema)
@@ -367,10 +365,8 @@ export const sendPayslipInvoice = authActionClient
   });
 
 /**
- * Set an inline days-worked override on one payslip, then recalc the run so the
- * dependent totals refresh. The override survives the recalc (the engine reads
- * the existing `days_worked` and passes it through). Refused on a locked run
- * *before* any write, so a locked payslip is never mutated.
+ * Set or clear an inline days-worked override on one payslip, then recalc the
+ * run so dependent totals refresh. Refused on a locked run before any write.
  */
 export const overrideDaysWorked = authActionClient
   .schema(overrideDaysWorkedSchema)
@@ -388,7 +384,7 @@ export const overrideDaysWorked = authActionClient
 
     const { error: updateError } = await supabase
       .from('payslips')
-      .update({ days_worked: parsedInput.days_worked })
+      .update({ days_worked_override: parsedInput.days_worked })
       .eq('id', parsedInput.payslip_id);
     if (updateError) throw new Error(updateError.message);
 
@@ -401,9 +397,8 @@ export const overrideDaysWorked = authActionClient
   });
 
 /**
- * Set a per-payslip overtime-multiplier override on one or many payslips of a
- * run (single-row edit or the bulk popover), then recalc once. The override
- * survives future recalcs. Refused on a locked run before any write.
+ * Set or clear a per-payslip overtime-multiplier override on one or many
+ * payslips, then recalc once. Refused on a locked run before any write.
  */
 export const overrideOtMultiplier = authActionClient
   .schema(overrideOtMultiplierSchema)
@@ -421,7 +416,9 @@ export const overrideOtMultiplier = authActionClient
 
     const { error: updateError } = await supabase
       .from('payslips')
-      .update({ overtime_multiplier: parsedInput.overtime_multiplier })
+      .update({
+        overtime_multiplier_override: parsedInput.overtime_multiplier,
+      })
       .eq('payroll_run_id', parsedInput.run_id)
       .in('id', parsedInput.payslip_ids);
     if (updateError) throw new Error(updateError.message);
