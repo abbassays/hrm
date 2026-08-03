@@ -68,6 +68,8 @@ Read these documents in order. This file provides a brief overview and links to 
   - [docs/backend/server-actions-and-db.md](./backend/server-actions-and-db.md)
 - Supabase instances and migrations (dev/prod workflow)
   - [docs/backend/supabase-instances-and-migrations.md](./backend/supabase-instances-and-migrations.md)
+- Employee historical-data backfill rules and validation runbook
+  - [docs/backend/employee-data-backfill.md](./backend/employee-data-backfill.md)
 
 ### 8) Team workflows
 
