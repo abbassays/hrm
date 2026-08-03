@@ -22,7 +22,7 @@ export type EmployeeRow = Tables<'employees'> & {
 // fields to the browser; the detail page loads the full row per-employee.
 type EmployeeListRow = Pick<
   Tables<'employees'>,
-  'id' | 'full_name' | 'email' | 'account_status' | 'invited_at'
+  'id' | 'full_name' | 'email' | 'account_status' | 'invited_at' | 'disabled_at'
 > & {
   employment_details: Pick<
     Tables<'employment_details'>,
@@ -45,6 +45,7 @@ function toEmployeeListItem(row: EmployeeListRow): EmployeeListItem {
     department: work?.department ?? '',
     employmentType: work?.employment_type ?? 'full_time',
     status: row.account_status,
+    disabledAt: row.disabled_at,
     invitedAt: row.invited_at ?? '',
     social: social
       ? {
@@ -102,6 +103,7 @@ export function toEmployee(row: EmployeeRow): Employee {
     medicalCapOverride: work?.medical_cap_override ?? null,
     otMultiplierOverride: work?.ot_multiplier_override ?? null,
     status: row.account_status,
+    disabledAt: row.disabled_at,
     invitedAt: row.invited_at ?? '',
     joinedAt: row.activated_at,
   };
@@ -114,7 +116,7 @@ const fetchEmployees = authQuery(async ({ supabase }) => {
   const { data, error } = await supabase
     .from('employees')
     .select(
-      'id, full_name, email, account_status, invited_at, employment_details(designation, department, employment_type), socials(github_url, linkedin_url, twitter_url)',
+      'id, full_name, email, account_status, invited_at, disabled_at, employment_details(designation, department, employment_type), socials(github_url, linkedin_url, twitter_url)',
     )
     .eq('role', 'employee')
     .order('created_at', { ascending: false });

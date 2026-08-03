@@ -4,7 +4,7 @@
 import { type CustomField } from '@/schema/payroll';
 
 /** Invited employees enter onboarding; completing it activates them directly. */
-export type AccountStatus = 'invited' | 'onboarding' | 'active';
+export type AccountStatus = 'invited' | 'onboarding' | 'active' | 'disabled';
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected';
 
@@ -76,6 +76,7 @@ export type Employee = {
   medicalCapOverride: number | null; // PKR
   otMultiplierOverride: number | null;
   status: AccountStatus;
+  disabledAt: string | null;
   invitedAt: string;
   joinedAt: string | null;
 };
@@ -93,6 +94,7 @@ export type EmployeeListItem = Pick<
   | 'department'
   | 'employmentType'
   | 'status'
+  | 'disabledAt'
   | 'invitedAt'
   | 'social'
 >;

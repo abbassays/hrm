@@ -2,9 +2,10 @@
 
 import {
   ArrowRight,
+  Ban,
   MoreHorizontal,
+  RotateCcw,
   Send,
-  Trash2,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -24,7 +25,7 @@ import {
 import { paths } from '@/constants/paths';
 
 import { CancelInviteDialog } from './cancel-invite-dialog';
-import { DeleteEmployeeDialog } from './delete-employee-dialog';
+import { EmployeeAccessDialog } from './delete-employee-dialog';
 
 import { EmployeeListItem } from '@/types/hrm';
 
@@ -33,14 +34,15 @@ type EmployeesTableRowActionsProps = {
 };
 
 /** Per-row directory controls: view, invite management while still invited,
- * and permanent deletion. Completed onboarding activates automatically. */
+ * and reversible access control. Completed onboarding activates automatically. */
 export function EmployeesTableRowActions({
   employee,
 }: EmployeesTableRowActionsProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
   const label = employee.fullName || employee.email;
   const isInvited = employee.status === 'invited';
+  const isDisabled = employee.status === 'disabled';
 
   const resend = useResendInvite(() =>
     toast.success(`Invitation resent to ${employee.email}`),
@@ -84,11 +86,13 @@ export function EmployeesTableRowActions({
             </>
           )}
           <DropdownMenuItem
-            onSelect={() => setDeleteOpen(true)}
-            className='text-destructive focus:text-destructive'
+            onSelect={() => setAccessOpen(true)}
+            className={
+              isDisabled ? undefined : 'text-destructive focus:text-destructive'
+            }
           >
-            <Trash2 />
-            Delete employee
+            {isDisabled ? <RotateCcw /> : <Ban />}
+            {isDisabled ? 'Re-enable employee' : 'Disable employee'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -102,11 +106,12 @@ export function EmployeesTableRowActions({
           onOpenChange={setCancelOpen}
         />
       )}
-      <DeleteEmployeeDialog
+      <EmployeeAccessDialog
         employeeId={employee.id}
         employeeName={label}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
+        isDisabled={isDisabled}
+        open={accessOpen}
+        onOpenChange={setAccessOpen}
       />
     </div>
   );

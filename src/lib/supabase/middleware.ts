@@ -104,6 +104,19 @@ export async function updateSession(request: NextRequest) {
   // so admin access fails closed.
   if (user) {
     const isAdmin = user.app_metadata?.role === 'admin';
+    // A ban prevents new sessions, but an already-issued access token can live
+    // briefly. Read the canonical row on every protected request so disabling
+    // takes effect immediately for an in-flight session too.
+    if (!isAdmin && !isPublicRoute(pathname)) {
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('account_status')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!employee || employee.account_status === 'disabled') {
+        return redirectWithCookies(request, supabaseResponse, paths.auth.login);
+      }
+    }
     const status = user.app_metadata?.account_status as
       | AccountStatus
       | undefined;

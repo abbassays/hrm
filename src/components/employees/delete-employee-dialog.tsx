@@ -2,7 +2,10 @@
 
 import { toast } from 'sonner';
 
-import { useDeleteEmployee } from '@/hooks/actions/use-invite-employee';
+import {
+  useDisableEmployee,
+  useEnableEmployee,
+} from '@/hooks/actions/use-invite-employee';
 
 import { ScrollableDialogContent } from '@/components/hrm/scrollable-dialog-content';
 import { Button } from '@/components/ui/button';
@@ -14,53 +17,60 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-type DeleteEmployeeDialogProps = {
+type EmployeeAccessDialogProps = {
   employeeId: string;
   employeeName: string;
+  isDisabled: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-/** A deliberate confirmation around a permanent account removal. The action
- * clears the auth account, employee record, all dependent HR data, and private
- * employee files; there is no restore path. */
-export function DeleteEmployeeDialog({
+/** A deliberate confirmation around a reversible employee access change. */
+export function EmployeeAccessDialog({
   employeeId,
   employeeName,
+  isDisabled,
   open,
   onOpenChange,
-}: DeleteEmployeeDialogProps) {
-  const { execute, isPending } = useDeleteEmployee(() => {
-    toast.success(`${employeeName} permanently deleted`);
+}: EmployeeAccessDialogProps) {
+  const disable = useDisableEmployee(() => {
+    toast.success(`${employeeName} disabled`);
     onOpenChange(false);
   });
+  const enable = useEnableEmployee(() => {
+    toast.success(`${employeeName} re-enabled`);
+    onOpenChange(false);
+  });
+  const action = isDisabled ? enable : disable;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ScrollableDialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <DialogTitle>Delete employee?</DialogTitle>
+          <DialogTitle>
+            {isDisabled ? 'Re-enable employee?' : 'Disable employee?'}
+          </DialogTitle>
           <DialogDescription>
-            This permanently deletes {employeeName}&apos;s account, profile,
-            payroll records, requests, documents, notifications, and uploaded
-            files. This cannot be undone.
+            {isDisabled
+              ? `Restore ${employeeName}'s login access and previous account status.`
+              : `Block ${employeeName}'s login while keeping their profile, payroll records, requests, documents, notifications, and uploaded files intact.`}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button
             type='button'
             variant='outline'
-            disabled={isPending}
+            disabled={action.isPending}
             onClick={() => onOpenChange(false)}
           >
-            Keep employee
+            Cancel
           </Button>
           <Button
-            variant='destructive'
-            isLoading={isPending}
-            onClick={() => execute({ employeeId })}
+            variant={isDisabled ? 'default' : 'destructive'}
+            isLoading={action.isPending}
+            onClick={() => action.execute({ employeeId })}
           >
-            Delete permanently
+            {isDisabled ? 'Re-enable employee' : 'Disable employee'}
           </Button>
         </DialogFooter>
       </ScrollableDialogContent>

@@ -22,61 +22,6 @@ const requireAdmin = (role?: string) => {
   if (role !== 'admin') throw new Error('Forbidden');
 };
 
-const EMPLOYEE_STORAGE_BUCKETS = [
-  'identity-docs',
-  'contracts',
-  'medical-proofs',
-] as const;
-
-/** Storage objects are not relational data, so Postgres cascades cannot remove
- * them. Every employee-owned object is namespaced below their id in these three
- * private buckets. List recursively rather than relying on database rows: that
- * also clears a file left behind by an interrupted upload. */
-async function listEmployeeStoragePaths(
-  bucket: (typeof EMPLOYEE_STORAGE_BUCKETS)[number],
-  prefix: string,
-): Promise<string[]> {
-  const paths: string[] = [];
-  let offset = 0;
-
-  while (true) {
-    const { data, error } = await supabaseAdmin.storage.from(bucket).list(prefix, {
-      limit: 1000,
-      offset,
-    });
-    if (error) throw new Error(`Could not inspect ${bucket}: ${error.message}`);
-
-    for (const entry of data) {
-      const path = `${prefix}/${entry.name}`;
-      // Supabase Storage represents virtual folders with a null id. Recurse so
-      // medical proof paths (<employee>/<claim>/<file>) are included too.
-      if (entry.id === null) {
-        paths.push(...(await listEmployeeStoragePaths(bucket, path)));
-      } else {
-        paths.push(path);
-      }
-    }
-
-    if (data.length < 1000) return paths;
-    offset += data.length;
-  }
-}
-
-async function removeEmployeeStorage(employeeId: string) {
-  for (const bucket of EMPLOYEE_STORAGE_BUCKETS) {
-    const paths = await listEmployeeStoragePaths(bucket, employeeId);
-
-    // Storage's remove endpoint accepts an array. Chunking keeps a heavily-used
-    // employee's historical documents within the endpoint's practical limits.
-    for (let index = 0; index < paths.length; index += 1000) {
-      const { error } = await supabaseAdmin.storage
-        .from(bucket)
-        .remove(paths.slice(index, index + 1000));
-      if (error) throw new Error(`Could not remove ${bucket}: ${error.message}`);
-    }
-  }
-}
-
 /**
  * Admin-only. Bring a person into the system by email invite — there is no
  * self-signup.
@@ -277,37 +222,107 @@ export const cancelInvite = authActionClient
   });
 
 /**
- * Permanently remove an employee account. This is intentionally more than a
- * public-row delete: deleting the auth user is the root operation, and the
- * employees -> auth.users FK added in `employee_account_delete_cascade` then
- * removes the employee and every database-owned dependent row in the same
- * database transaction. Storage is handled first because it sits outside that
- * transaction and otherwise would leave private files behind.
- *
- * The role guard prevents this control from deleting an administrator account;
- * admins are managed through their own profile and may own audit references.
+ * Disable an employee without deleting their Auth identity, HR history, or
+ * stored documents. Supabase Auth rejects future sign-ins; the database state
+ * is retained so a later re-enable restores the exact lifecycle status.
  */
-export const deleteEmployee = authActionClient
+export const disableEmployee = authActionClient
   .schema(employeeIdSchema)
   .action(async ({ parsedInput: { employeeId }, ctx: { authUser } }) => {
     requireAdmin(authUser.user?.app_metadata.role);
 
     const { data: employee, error: readError } = await supabaseAdmin
       .from('employees')
-      .select('role')
+      .select('role, account_status')
       .eq('id', employeeId)
       .maybeSingle();
     if (readError) throw new Error(readError.message);
     if (!employee) throw new Error('Employee not found.');
     if (employee.role !== 'employee') {
-      throw new Error('Administrator accounts cannot be deleted here.');
+      throw new Error('Administrator accounts cannot be disabled here.');
+    }
+    if (employee.account_status === 'disabled') {
+      throw new Error('This employee is already disabled.');
     }
 
-    await removeEmployeeStorage(employeeId);
-
-    const { error: authError } =
-      await supabaseAdmin.auth.admin.deleteUser(employeeId);
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+      employeeId,
+      { ban_duration: '876000h' },
+    );
     if (authError) throw new Error(authError.message);
+
+    const { error: updateError } = await supabaseAdmin
+      .from('employees')
+      .update({
+        account_status: 'disabled',
+        disabled_at: new Date().toISOString(),
+        disabled_by: authUser.user.id,
+        disabled_from_status: employee.account_status,
+      })
+      .eq('id', employeeId)
+      .neq('account_status', 'disabled');
+    if (updateError) {
+      await supabaseAdmin.auth.admin.updateUserById(employeeId, {
+        ban_duration: 'none',
+      });
+      throw new Error(updateError.message);
+    }
+  });
+
+/** Re-enable a previously disabled employee and restore their pre-disable
+ * lifecycle state. The restore value is recorded at disable time, never guessed. */
+export const enableEmployee = authActionClient
+  .schema(employeeIdSchema)
+  .action(async ({ parsedInput: { employeeId }, ctx: { authUser } }) => {
+    requireAdmin(authUser.user?.app_metadata.role);
+
+    const { data: employee, error: readError } = await supabaseAdmin
+      .from('employees')
+      .select(
+        'role, account_status, disabled_at, disabled_by, disabled_from_status',
+      )
+      .eq('id', employeeId)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!employee) throw new Error('Employee not found.');
+    if (employee.role !== 'employee') {
+      throw new Error('Administrator accounts cannot be enabled here.');
+    }
+    if (
+      employee.account_status !== 'disabled' ||
+      !employee.disabled_from_status
+    ) {
+      throw new Error('This employee is not disabled.');
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('employees')
+      .update({
+        account_status: employee.disabled_from_status,
+        disabled_at: null,
+        disabled_by: null,
+        disabled_from_status: null,
+      })
+      .eq('id', employeeId)
+      .eq('account_status', 'disabled');
+    if (updateError) throw new Error(updateError.message);
+
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+      employeeId,
+      { ban_duration: 'none' },
+    );
+    if (authError) {
+      await supabaseAdmin
+        .from('employees')
+        .update({
+          account_status: 'disabled',
+          disabled_at: employee.disabled_at,
+          disabled_by: employee.disabled_by,
+          disabled_from_status: employee.disabled_from_status,
+        })
+        .eq('id', employeeId);
+      throw new Error(authError.message);
+    }
   });
 
 // ---------------------------------------------------------------------------

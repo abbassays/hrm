@@ -32,7 +32,7 @@ import { onError } from '@/lib/show-error-toast';
 import { paths } from '@/constants/paths';
 import { type ForgotPasswordInput, forgotPasswordSchema } from '@/schema/auth';
 
-type Screen = 'form' | 'sent' | 'not_found';
+type Screen = 'form' | 'sent' | 'not_found' | 'disabled';
 
 export function ForgotPasswordForm() {
   // Which of the three screens is showing, and the address to echo back on the
@@ -47,7 +47,7 @@ export function ForgotPasswordForm() {
 
   const { execute, isPending } = useAction(requestPasswordReset, {
     onSuccess: ({ data }) => {
-      setScreen(data?.status === 'not_found' ? 'not_found' : 'sent');
+      setScreen(data?.status ?? 'sent');
     },
     onError,
   });
@@ -114,6 +114,31 @@ export function ForgotPasswordForm() {
               Back to sign in
             </Button>
           </Link>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // A deliberately disabled account has no password-recovery path until an
+  // administrator restores its access.
+  if (screen === 'disabled') {
+    return (
+      <Card>
+        <CardHeader className='items-center text-center'>
+          <UserX className='size-8 text-destructive' aria-hidden />
+          <CardTitle className='text-xl font-semibold'>Account disabled</CardTitle>
+          <CardDescription>
+            This account has been disabled and can no longer be accessed. Please
+            contact your administrator if you think this is a mistake.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='flex flex-col gap-3'>
+          <Link href={paths.auth.login} className='w-full'>
+            <Button className='w-full'>Back to sign in</Button>
+          </Link>
+          <Button type='button' variant='ghost' onClick={backToForm}>
+            Use a different email
+          </Button>
         </CardContent>
       </Card>
     );

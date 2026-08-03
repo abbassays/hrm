@@ -5,7 +5,8 @@ import { useAction } from 'next-safe-action/hooks';
 
 import {
   cancelInvite,
-  deleteEmployee,
+  disableEmployee,
+  enableEmployee,
   inviteEmployee,
   resendInvite,
 } from '@/actions/employees';
@@ -61,19 +62,30 @@ export function useCancelInvite(onSuccess?: () => void) {
   });
 }
 
-/** Permanently remove an employee and all of their account-owned data. The
- * dashboard, directory, approvals, and notification badge can all be affected,
- * so invalidate each related cache after the server-side cascade completes. */
-export function useDeleteEmployee(onSuccess?: () => void) {
+/** Disable an employee while preserving their account, records, and files. */
+export function useDisableEmployee(onSuccess?: () => void) {
   const queryClient = useQueryClient();
 
-  return useAction(deleteEmployee, {
+  return useAction(disableEmployee, {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.EMPLOYEES] });
       queryClient.invalidateQueries({ queryKey: [QueryKeys.DASHBOARD_SUMMARY] });
       queryClient.invalidateQueries({ queryKey: [QueryKeys.EMPLOYEES_BY_STATUS] });
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.PENDING_APPROVALS] });
-      queryClient.invalidateQueries({ queryKey: [QueryKeys.NOTIFICATIONS_UNREAD] });
+      onSuccess?.();
+    },
+    onError,
+  });
+}
+
+/** Restore login access and the employee's pre-disable lifecycle state. */
+export function useEnableEmployee(onSuccess?: () => void) {
+  const queryClient = useQueryClient();
+
+  return useAction(enableEmployee, {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.EMPLOYEES] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.DASHBOARD_SUMMARY] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.EMPLOYEES_BY_STATUS] });
       onSuccess?.();
     },
     onError,

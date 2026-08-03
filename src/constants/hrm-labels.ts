@@ -24,6 +24,7 @@ export const accountStatusLabels: Record<AccountStatus, StatusPresentation> = {
   invited: { label: 'Invited', variant: 'outline' },
   onboarding: { label: 'Onboarding', variant: 'secondary' },
   active: { label: 'Active', variant: 'default' },
+  disabled: { label: 'Disabled', variant: 'destructive' },
 };
 
 export const payrollCycleStatusLabels: Record<

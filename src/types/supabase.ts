@@ -152,6 +152,11 @@ export type Database = {
           consent_at: string | null
           created_at: string
           date_of_birth: string | null
+          disabled_at: string | null
+          disabled_by: string | null
+          disabled_from_status:
+            | Database["public"]["Enums"]["account_status"]
+            | null
           email: string
           emergency_contact: string | null
           full_name: string | null
@@ -172,6 +177,11 @@ export type Database = {
           consent_at?: string | null
           created_at?: string
           date_of_birth?: string | null
+          disabled_at?: string | null
+          disabled_by?: string | null
+          disabled_from_status?:
+            | Database["public"]["Enums"]["account_status"]
+            | null
           email: string
           emergency_contact?: string | null
           full_name?: string | null
@@ -192,6 +202,11 @@ export type Database = {
           consent_at?: string | null
           created_at?: string
           date_of_birth?: string | null
+          disabled_at?: string | null
+          disabled_by?: string | null
+          disabled_from_status?:
+            | Database["public"]["Enums"]["account_status"]
+            | null
           email?: string
           emergency_contact?: string | null
           full_name?: string | null
@@ -202,7 +217,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employees_disabled_by_fkey"
+            columns: ["disabled_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employment_details: {
         Row: {
@@ -1178,7 +1201,7 @@ export type Database = {
       }
     }
     Enums: {
-      account_status: "invited" | "onboarding" | "active"
+      account_status: "invited" | "onboarding" | "active" | "disabled"
       employment_type: "full_time" | "part_time" | "contract" | "internship"
       leave_type: "paid" | "sick" | "unpaid" | "half_day"
       medical_for: "self" | "parent" | "spouse" | "child"
@@ -1322,7 +1345,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      account_status: ["invited", "onboarding", "active"],
+      account_status: ["invited", "onboarding", "active", "disabled"],
       employment_type: ["full_time", "part_time", "contract", "internship"],
       leave_type: ["paid", "sick", "unpaid", "half_day"],
       medical_for: ["self", "parent", "spouse", "child"],

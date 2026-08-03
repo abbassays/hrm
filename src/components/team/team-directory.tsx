@@ -34,7 +34,7 @@ export function TeamDirectory() {
   // Everyone who has joined the company — exclude still-pending invites,
   // whose profiles are mostly empty until they onboard.
   const members = (employees ?? []).filter(
-    (employee) => employee.status !== 'invited',
+    (employee) => employee.status !== 'invited' && employee.status !== 'disabled',
   );
 
   if (!members.length) {

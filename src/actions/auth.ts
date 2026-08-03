@@ -20,11 +20,23 @@ export const signInWithPassword = safeActionClient
   .action(async ({ parsedInput: { email, password } }) => {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim().toLowerCase(),
       password,
     });
     // Uniform message — never reveal whether it was the email or the password.
-    if (error) throw new Error('Invalid email or password');
+    if (error) {
+      const { data: employee } = await supabaseAdmin
+        .from('employees')
+        .select('account_status')
+        .eq('email', email.trim().toLowerCase())
+        .maybeSingle();
+      if (employee?.account_status === 'disabled') {
+        throw new Error(
+          'This account has been disabled and can no longer be accessed. Please contact your administrator if you think this is a mistake.',
+        );
+      }
+      throw new Error('Invalid email or password');
+    }
     // Role decides which app the caller lands in (mirrored into app_metadata
     // from employees.role). The middleware enforces the same split on every
     // subsequent request.
@@ -60,7 +72,7 @@ export const requestPasswordReset = safeActionClient
     // auth user is created with a paired row), so it decides send vs not-found.
     const { data: employee, error: lookupError } = await supabaseAdmin
       .from('employees')
-      .select('full_name')
+      .select('full_name, account_status')
       .eq('email', normalizedEmail)
       .maybeSingle();
     if (lookupError) {
@@ -68,6 +80,11 @@ export const requestPasswordReset = safeActionClient
     }
     if (!employee) {
       return { status: 'not_found' as const };
+    }
+    if (employee.account_status === 'disabled') {
+      // A reset must not become a misleading recovery path for an account that
+      // has intentionally lost access. Re-enabling restores this route.
+      return { status: 'disabled' as const };
     }
 
     // Mint the one-time recovery link (no Supabase mailer is triggered) and
