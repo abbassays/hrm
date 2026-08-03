@@ -228,7 +228,7 @@ export const cancelInvite = authActionClient
  */
 export const disableEmployee = authActionClient
   .schema(employeeIdSchema)
-  .action(async ({ parsedInput: { employeeId }, ctx: { authUser } }) => {
+  .action(async ({ parsedInput: { employeeId }, ctx: { authUser, supabase } }) => {
     requireAdmin(authUser.user?.app_metadata.role);
 
     const { data: employee, error: readError } = await supabaseAdmin
@@ -251,16 +251,10 @@ export const disableEmployee = authActionClient
     );
     if (authError) throw new Error(authError.message);
 
-    const { error: updateError } = await supabaseAdmin
-      .from('employees')
-      .update({
-        account_status: 'disabled',
-        disabled_at: new Date().toISOString(),
-        disabled_by: authUser.user.id,
-        disabled_from_status: employee.account_status,
-      })
-      .eq('id', employeeId)
-      .neq('account_status', 'disabled');
+    const { error: updateError } = await supabase.rpc('set_employee_access', {
+      p_employee_id: employeeId,
+      p_disabled: true,
+    });
     if (updateError) {
       await supabaseAdmin.auth.admin.updateUserById(employeeId, {
         ban_duration: 'none',
@@ -273,14 +267,12 @@ export const disableEmployee = authActionClient
  * lifecycle state. The restore value is recorded at disable time, never guessed. */
 export const enableEmployee = authActionClient
   .schema(employeeIdSchema)
-  .action(async ({ parsedInput: { employeeId }, ctx: { authUser } }) => {
+  .action(async ({ parsedInput: { employeeId }, ctx: { authUser, supabase } }) => {
     requireAdmin(authUser.user?.app_metadata.role);
 
     const { data: employee, error: readError } = await supabaseAdmin
       .from('employees')
-      .select(
-        'role, account_status, disabled_at, disabled_by, disabled_from_status',
-      )
+      .select('role, account_status, disabled_from_status')
       .eq('id', employeeId)
       .maybeSingle();
     if (readError) throw new Error(readError.message);
@@ -295,16 +287,10 @@ export const enableEmployee = authActionClient
       throw new Error('This employee is not disabled.');
     }
 
-    const { error: updateError } = await supabaseAdmin
-      .from('employees')
-      .update({
-        account_status: employee.disabled_from_status,
-        disabled_at: null,
-        disabled_by: null,
-        disabled_from_status: null,
-      })
-      .eq('id', employeeId)
-      .eq('account_status', 'disabled');
+    const { error: updateError } = await supabase.rpc('set_employee_access', {
+      p_employee_id: employeeId,
+      p_disabled: false,
+    });
     if (updateError) throw new Error(updateError.message);
 
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -312,15 +298,10 @@ export const enableEmployee = authActionClient
       { ban_duration: 'none' },
     );
     if (authError) {
-      await supabaseAdmin
-        .from('employees')
-        .update({
-          account_status: 'disabled',
-          disabled_at: employee.disabled_at,
-          disabled_by: employee.disabled_by,
-          disabled_from_status: employee.disabled_from_status,
-        })
-        .eq('id', employeeId);
+      await supabase.rpc('set_employee_access', {
+        p_employee_id: employeeId,
+        p_disabled: true,
+      });
       throw new Error(authError.message);
     }
   });

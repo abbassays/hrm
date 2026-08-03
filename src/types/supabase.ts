@@ -1173,6 +1173,10 @@ export type Database = {
       }
       run_is_locked: { Args: { p_run_id: string }; Returns: boolean }
       submit_onboarding: { Args: never; Returns: undefined }
+      set_employee_access: {
+        Args: { p_disabled: boolean; p_employee_id: string }
+        Returns: undefined
+      }
       unlock_payroll: { Args: { p_run_id: string }; Returns: undefined }
       upload_contract: {
         Args: {
