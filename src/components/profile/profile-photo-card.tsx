@@ -85,7 +85,7 @@ export function ProfilePhotoCard({
           </CardDescription>
         </CardHeader>
         <CardContent className='flex flex-col gap-5 sm:flex-row sm:items-center'>
-          <Avatar className='aspect-square size-20'>
+          <Avatar className='aspect-square size-20 shrink-0'>
             {photoUrl && (
               <AvatarImage
                 src={photoUrl}
@@ -97,7 +97,7 @@ export function ProfilePhotoCard({
               {fullName ? getInitials(fullName) : 'U'}
             </AvatarFallback>
           </Avatar>
-          <div className='w-full max-w-sm'>
+          <div className='flex-1'>
             {isLoading ? (
               <div className='h-10 w-36 animate-pulse rounded-md bg-muted' />
             ) : (
