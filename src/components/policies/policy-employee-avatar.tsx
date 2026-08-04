@@ -38,6 +38,7 @@ export function PolicyEmployeeAvatar({
         <AvatarImage
           src={photo.url}
           alt={`${fullName} profile photo`}
+          className='object-cover'
           onLoadingStatusChange={(status) => {
             if (status === 'loaded') setLoadedPhotoUrl(photo.url);
             if (status === 'error') setFailedPhotoUrl(photo.url);

@@ -93,6 +93,7 @@ function TeamMemberCard({
                 <AvatarImage
                   src={profilePhoto.url}
                   alt={`${member.fullName} profile photo`}
+                  className='object-cover'
                   onLoadingStatusChange={(status) => {
                     if (status === 'loaded')
                       setLoadedPhotoUrl(profilePhoto.url);

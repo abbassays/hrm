@@ -46,6 +46,7 @@ export function UserCard() {
               <AvatarImage
                 src={photoUrl}
                 alt={`${name || 'User'} profile photo`}
+                className='object-cover'
               />
             )}
             <AvatarFallback className='bg-primary text-xs font-semibold text-primary-foreground'>
