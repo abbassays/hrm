@@ -59,3 +59,6 @@ storybook-static
 # historical-data backfill: manifests and pre-state snapshots (contains
 # employee identifiers; rollback evidence, not project source)
 .backfill/
+
+# captured webhook payloads (dev only; real meeting data)
+.fireflies-captures/

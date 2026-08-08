@@ -35,6 +35,7 @@ export enum QueryKeys {
   FX_RATES = 'fx-rates', // live exchange rates, keyed by base currency (BIT-16)
 
   // In-app notifications (BIT-26)
+  NOTETAKER_MEETINGS = 'notetaker-meetings', // caller's own + shared Fireflies meetings
   NOTIFICATIONS = 'notifications', // caller's own notification feed (bell dropdown)
   NOTIFICATIONS_UNREAD = 'notifications-unread', // caller's unread count (bell badge)
 

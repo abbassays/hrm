@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en" class="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fireflies Notetaker Widget — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================================
+   Tokens copied verbatim from src/app/globals.css (:root and .dark).
+   Values are HSL triplets, same as the real app.
+   ========================================================================= */
+:root {
+  --brand-500: 152 96% 41%;
+  --brand-800: 152 94% 16%;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 3.9%;
+  --popover: 0 0% 100%;
+  --primary: 152 96% 41%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96.1%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96.1%;
+  --muted-foreground: 0 0% 45.1%;
+  --accent: 152 60% 95%;
+  --accent-foreground: 152 94% 16%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 89.8%;
+  --input: 0 0% 89.8%;
+  --ring: 152 96% 41%;
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 0 0% 26%;
+  --radius: 0.5rem;
+}
+html.dark {
+  --background: 0 0% 9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 12%;
+  --primary: 152 96% 41%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 64%;
+  --accent: 152 45% 13%;
+  --accent-foreground: 152 75% 68%;
+  --destructive: 0 84% 60%;
+  --border: 0 0% 17%;
+  --input: 0 0% 17%;
+  --sidebar-background: 0 0% 7%;
+  --sidebar-foreground: 0 0% 80%;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Mulish', system-ui, -apple-system, sans-serif;
+  font-size: 14px; line-height: 1.5;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  -webkit-font-smoothing: antialiased;
+}
+
+.proto-banner {
+  background: hsl(var(--accent)); color: hsl(var(--accent-foreground));
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 10px 16px; font-size: 12.5px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+}
+.proto-banner .spacer { flex: 1; }
+.proto-banner button {
+  font: inherit; font-size: 12px; cursor: pointer;
+  border: 1px solid hsl(var(--border)); background: hsl(var(--card));
+  color: hsl(var(--foreground)); border-radius: calc(var(--radius) - 2px);
+  padding: 4px 10px;
+}
+.proto-banner button:hover { background: hsl(var(--muted)); }
+
+/* ---- faux app chrome, so the widget is seen in real context ---- */
+.app { display: flex; min-height: calc(100vh - 42px); }
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: hsl(var(--sidebar-background));
+  border-right: 1px solid hsl(var(--border));
+  padding: 16px 12px; color: hsl(var(--sidebar-foreground));
+}
+.sidebar .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 22px; padding: 0 6px; }
+.sidebar .brand img { width: 22px; height: 22px; }
+.sidebar .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: hsl(var(--muted-foreground)); padding: 0 6px 6px; }
+.nav-item { padding: 8px 10px; border-radius: var(--radius); font-weight: 500; color: hsl(var(--sidebar-foreground)); }
+.nav-item.active { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+.main { flex: 1; padding: 28px 32px; min-width: 0; }
+.main h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.main p.sub { color: hsl(var(--muted-foreground)); margin-top: 4px; }
+.faux-card {
+  margin-top: 22px; border: 1px solid hsl(var(--border)); background: hsl(var(--card));
+  border-radius: calc(var(--radius) + 2px); box-shadow: 0 1px 2px rgb(0 0 0 / .05);
+  height: 190px; display: grid; place-items: center; color: hsl(var(--muted-foreground)); font-size: 13px;
+}
+
+/* ============================ THE WIDGET ============================= */
+.fab {
+  position: fixed; right: 24px; bottom: 24px; z-index: 60;
+  height: 52px; min-width: 52px; padding: 0 18px 0 16px;
+  display: inline-flex; align-items: center; gap: 9px;
+  border: none; border-radius: 999px; cursor: pointer;
+  background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+  font: inherit; font-weight: 600; font-size: 14px;
+  box-shadow: 0 8px 24px -6px hsl(var(--primary) / .55), 0 2px 6px rgb(0 0 0 / .12);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.fab:hover { transform: translateY(-1px); box-shadow: 0 12px 28px -6px hsl(var(--primary) / .6); }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgb(255 255 255 / .6); }
+  70% { box-shadow: 0 0 0 7px rgb(255 255 255 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(255 255 255 / 0); }
+}
+.fab.hidden { display: none; }
+/* The Fireflies mark is magenta on transparent, which clashes on the green
+   pill — so it sits on a white chip, the way Fireflies presents it itself.
+   Same treatment in the panel header keeps it consistent across light/dark. */
+.ff-chip {
+  position: relative; flex-shrink: 0;
+  width: 30px; height: 30px; border-radius: 9px;
+  background: #fff; display: grid; place-items: center;
+  box-shadow: 0 1px 2px rgb(0 0 0 / .16);
+}
+.ff-chip img { width: 21px; height: 21px; display: block; }
+.ff-chip .live {
+  position: absolute; top: -2px; right: -2px;
+  width: 9px; height: 9px; border-radius: 999px;
+  background: hsl(38 92% 50%); border: 2px solid hsl(var(--primary));
+  animation: pulse 1.8s infinite;
+}
+.panel-head .ff-chip { width: 32px; height: 32px; border-radius: 9px; }
+.panel-head .ff-chip img { width: 22px; height: 22px; }
+.panel-head .ff-chip .live { display: none; }
+
+.panel {
+  position: fixed; right: 24px; bottom: 24px; z-index: 61;
+  width: 396px; max-height: min(640px, calc(100vh - 90px));
+  display: none; flex-direction: column; overflow: hidden;
+  background: hsl(var(--card)); color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: 0 18px 50px -12px rgb(0 0 0 / .3), 0 4px 12px rgb(0 0 0 / .08);
+}
+.panel.open { display: flex; }
+
+.panel-head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px; border-bottom: 1px solid hsl(var(--border)); }
+.panel-head .icon { width: 30px; height: 30px; border-radius: 8px; background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); display: grid; place-items: center; flex-shrink: 0; }
+.panel-head .t { font-weight: 700; font-size: 14px; }
+.panel-head .s { font-size: 11.5px; color: hsl(var(--muted-foreground)); }
+.icon-btn { margin-left: auto; border: none; background: transparent; color: hsl(var(--muted-foreground)); cursor: pointer; border-radius: var(--radius); padding: 6px; display: grid; place-items: center; }
+.icon-btn:hover { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
+
+.tabs { display: flex; gap: 2px; padding: 8px 10px 0; border-bottom: 1px solid hsl(var(--border)); }
+.tab {
+  font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+  border: none; background: transparent; color: hsl(var(--muted-foreground));
+  padding: 7px 12px 9px; border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tab[aria-selected="true"] { color: hsl(var(--foreground)); border-bottom-color: hsl(var(--primary)); font-weight: 600; }
+.tab .count { display: inline-block; margin-left: 5px; font-size: 11px; padding: 0 5px; border-radius: 999px; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+
+.panel-body { padding: 14px; overflow-y: auto; flex: 1; }
+.pane { display: none; }
+.pane.active { display: block; }
+
+label.fl { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
+.hint { font-size: 11.5px; color: hsl(var(--muted-foreground)); margin-top: 5px; }
+input[type=text], select {
+  width: 100%; height: 40px; font: inherit; font-size: 13.5px;
+  border: 1px solid hsl(var(--input)); border-radius: var(--radius);
+  background: hsl(var(--background)); color: hsl(var(--foreground));
+  padding: 0 11px;
+}
+input[type=text]::placeholder { color: hsl(var(--muted-foreground)); }
+input[type=text]:focus, select:focus { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 2px hsl(var(--ring) / .25); }
+.field { margin-bottom: 13px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* share-with picker */
+.picker { border: 1px solid hsl(var(--input)); border-radius: var(--radius); overflow: hidden; }
+.picker-list { max-height: 152px; overflow-y: auto; }
+.person { display: flex; align-items: center; gap: 9px; padding: 8px 10px; cursor: pointer; }
+.person:hover { background: hsl(var(--muted)); }
+.person + .person { border-top: 1px solid hsl(var(--border)); }
+.avatar { width: 26px; height: 26px; border-radius: 999px; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); display: grid; place-items: center; font-size: 10.5px; font-weight: 700; flex-shrink: 0; }
+.person .nm { font-size: 13px; font-weight: 500; }
+.person .rl { font-size: 11px; color: hsl(var(--muted-foreground)); }
+.person .meta { min-width: 0; }
+.check { margin-left: auto; width: 17px; height: 17px; border-radius: 4px; border: 1.5px solid hsl(var(--input)); display: grid; place-items: center; flex-shrink: 0; }
+.person.sel .check { background: hsl(var(--primary)); border-color: hsl(var(--primary)); color: #fff; }
+.person.locked { opacity: .62; cursor: not-allowed; }
+.person.locked .check { background: hsl(var(--muted-foreground)); border-color: hsl(var(--muted-foreground)); color: hsl(var(--card)); }
+
+.btn {
+  width: 100%; height: 40px; font: inherit; font-size: 14px; font-weight: 600;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn:hover { background: hsl(var(--primary) / .9); }
+.btn.outline { background: transparent; color: hsl(var(--foreground)); border: 1px solid hsl(var(--input)); }
+.btn.outline:hover { background: hsl(var(--muted)); }
+.btn.sm { height: 34px; font-size: 13px; width: auto; padding: 0 12px; }
+
+.alert { border-radius: var(--radius); padding: 10px 12px; font-size: 12.5px; margin-bottom: 13px; display: flex; gap: 9px; }
+.alert.err { background: hsl(var(--destructive) / .1); border: 1px solid hsl(var(--destructive) / .35); color: hsl(var(--destructive)); }
+.alert.info { background: hsl(var(--accent)); border: 1px solid hsl(var(--primary) / .3); color: hsl(var(--accent-foreground)); }
+
+/* history */
+.mrow { border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 11px 12px; margin-bottom: 9px; cursor: pointer; background: hsl(var(--card)); }
+.mrow:hover { border-color: hsl(var(--primary) / .5); background: hsl(var(--muted) / .5); }
+.mrow .top { display: flex; align-items: flex-start; gap: 8px; }
+.mrow .ttl { font-weight: 600; font-size: 13.5px; }
+.mrow .sub { font-size: 11.5px; color: hsl(var(--muted-foreground)); margin-top: 2px; }
+.badge { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; white-space: nowrap; letter-spacing: .02em; }
+.badge.done { background: hsl(var(--primary) / .14); color: hsl(var(--brand-800)); }
+html.dark .badge.done { color: hsl(152 75% 68%); }
+.badge.live { background: hsl(38 92% 50% / .16); color: hsl(38 70% 34%); }
+html.dark .badge.live { color: hsl(38 90% 62%); }
+.badge.wait { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); }
+.badge.fail { background: hsl(var(--destructive) / .13); color: hsl(var(--destructive)); }
+.faces { display: flex; margin-top: 8px; }
+.faces .avatar { width: 21px; height: 21px; font-size: 9px; margin-right: -6px; border: 2px solid hsl(var(--card)); }
+.faces .more { font-size: 11px; color: hsl(var(--muted-foreground)); margin-left: 12px; align-self: center; }
+
+.empty { text-align: center; padding: 34px 16px; color: hsl(var(--muted-foreground)); }
+.empty svg { opacity: .35; margin-bottom: 10px; }
+.empty .h { font-weight: 600; color: hsl(var(--foreground)); font-size: 13.5px; margin-bottom: 3px; }
+.empty .p { font-size: 12.5px; }
+
+/* detail */
+.back { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: hsl(var(--muted-foreground)); background: none; border: none; cursor: pointer; font: inherit; padding: 0 0 11px; }
+.back:hover { color: hsl(var(--foreground)); }
+.dtitle { font-weight: 700; font-size: 15px; }
+.dmeta { font-size: 11.5px; color: hsl(var(--muted-foreground)); margin-top: 3px; margin-bottom: 12px; }
+.sec { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: hsl(var(--muted-foreground)); margin: 14px 0 6px; }
+.sumbox { background: hsl(var(--muted) / .6); border: 1px solid hsl(var(--border)); border-radius: var(--radius); padding: 11px; font-size: 12.5px; }
+.sumbox ul { margin: 0; padding-left: 17px; }
+.sumbox li { margin-bottom: 4px; }
+.linkrow { display: flex; gap: 8px; }
+.linkrow .btn { flex: 1; }
+
+.diff-note { border: 1px dashed hsl(142 60% 55%); background: hsl(142 60% 97%); color: hsl(142 60% 25%); padding: 8px 12px; border-radius: 6px; font-size: 12px; margin: 0 0 12px; }
+html.dark .diff-note { background: hsl(142 45% 12%); color: hsl(142 60% 72%); }
+
+@media (max-width: 760px) {
+  .sidebar { display: none; }
+  .main { padding: 20px 16px; }
+  .panel { right: 10px; left: 10px; bottom: 10px; width: auto; max-height: calc(100vh - 80px); }
+  .fab { right: 16px; bottom: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="proto-banner">
+  <strong>Fireflies Notetaker Widget · Prototype</strong>
+  <span>Not real data — the widget is interactive</span>
+  <span class="spacer"></span>
+  <button onclick="setState('idle')">Closed</button>
+  <button onclick="setState('new')">New meeting</button>
+  <button onclick="setState('rate')">Rate limited</button>
+  <button onclick="setState('history')">History</button>
+  <button onclick="setState('detail')">Recording</button>
+  <button onclick="setState('empty')">Empty state</button>
+  <button onclick="toggleTheme()">Light / Dark</button>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><img src="/logo.svg" alt="" /> Bitsmiths HRM</div>
+    <div class="label">Admin</div>
+    <div class="nav-item">Dashboard</div>
+    <div class="nav-item">Approvals</div>
+    <div class="nav-item">Employees</div>
+    <div class="nav-item active">Payroll</div>
+    <div class="nav-item">Policies &amp; Contracts</div>
+    <div class="nav-item">Profile</div>
+  </aside>
+  <main class="main">
+    <h1>Payroll</h1>
+    <p class="sub">Any page behind the widget — it sits on every signed-in screen.</p>
+    <div class="faux-card">existing page content</div>
+  </main>
+</div>
+
+<!-- ============================ FAB ============================ -->
+<button class="fab" id="fab" onclick="openPanel()">
+  <span class="ff-chip">
+    <img src="fireflies-logo.png" alt="Fireflies" />
+    <!-- amber dot = a meeting is being recorded right now -->
+    <span class="live" id="fabLive"></span>
+  </span>
+  Notetaker
+</button>
+
+<!-- =========================== PANEL =========================== -->
+<div class="panel" id="panel">
+  <div class="panel-head">
+    <span class="ff-chip">
+      <img src="fireflies-logo.png" alt="Fireflies" />
+    </span>
+    <div>
+      <div class="t">Fireflies Notetaker</div>
+      <div class="s" id="headSub">Send the bot to a live call</div>
+    </div>
+    <button class="icon-btn" onclick="closePanel()" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab" id="tabNew" aria-selected="true" onclick="showTab('new')">New meeting</button>
+    <button class="tab" id="tabHist" aria-selected="false" onclick="showTab('hist')">History <span class="count">4</span></button>
+  </div>
+
+  <div class="panel-body">
+
+    <!-- ------------------------- NEW ------------------------- -->
+    <div class="pane active" id="paneNew">
+      <div class="alert err" id="rateAlert" style="display:none">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <div><strong>Rate limit reached.</strong> Fireflies allows 3 notetaker requests every 20 minutes across the whole team. Try again in about 6 minutes.</div>
+      </div>
+
+      <div class="field">
+        <label class="fl" for="lnk">Meeting link</label>
+        <input type="text" id="lnk" value="https://meet.google.com/xkq-mrhd-tzv" />
+      </div>
+
+      <div class="field">
+        <label class="fl" for="ttl">Meeting title</label>
+        <input type="text" id="ttl" value="Motornomic — sprint review" />
+        <div class="hint">Shown in history and in Fireflies.</div>
+      </div>
+
+      <div class="field">
+        <label class="fl" for="lng">Language</label>
+        <select id="lng">
+          <option value="en" selected>English</option>
+          <option value="ur">Urdu</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="fl">Share the recording with</label>
+        <div class="picker">
+          <div class="picker-list" id="people"></div>
+        </div>
+        <div class="hint">Chosen now, before the call. Nobody can be added afterwards — this is the only thing that grants access.</div>
+      </div>
+
+      <button class="btn" onclick="setState('history')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m5 12 5 5L20 7"/></svg>
+        Send notetaker
+      </button>
+    </div>
+
+    <!-- ----------------------- HISTORY ----------------------- -->
+    <div class="pane" id="paneHist">
+      <div id="histList">
+        <div class="mrow" onclick="setState('detail')">
+          <div class="top">
+            <div style="min-width:0">
+              <div class="ttl">Motornomic — sprint review</div>
+              <div class="sub">Today, 14:05 · 48 min</div>
+            </div>
+            <span class="badge done" style="margin-left:auto">READY</span>
+          </div>
+          <div class="faces">
+            <div class="avatar">MA</div><div class="avatar">MK</div><div class="avatar">MZ</div>
+            <span class="more">3 people</span>
+          </div>
+        </div>
+
+        <div class="mrow">
+          <div class="top">
+            <div style="min-width:0">
+              <div class="ttl">UniBid — apartment listings sync</div>
+              <div class="sub">Today, 15:30 · bot is in the call</div>
+            </div>
+            <span class="badge live" style="margin-left:auto">RECORDING</span>
+          </div>
+          <div class="faces">
+            <div class="avatar">MA</div><div class="avatar">TS</div>
+            <span class="more">2 people</span>
+          </div>
+        </div>
+
+        <div class="mrow">
+          <div class="top">
+            <div style="min-width:0">
+              <div class="ttl">Recash — weekly check-in</div>
+              <div class="sub">Today, 15:52 · waiting for the bot to join</div>
+            </div>
+            <span class="badge wait" style="margin-left:auto">REQUESTED</span>
+          </div>
+          <div class="faces">
+            <div class="avatar">MA</div>
+            <span class="more">only you</span>
+          </div>
+        </div>
+
+        <div class="mrow">
+          <div class="top">
+            <div style="min-width:0">
+              <div class="ttl">Anina — design handover</div>
+              <div class="sub">Today, 15:48 · rate limit reached</div>
+            </div>
+            <span class="badge fail" style="margin-left:auto">FAILED</span>
+          </div>
+          <div class="faces">
+            <div class="avatar">MA</div><div class="avatar">AS</div>
+            <span class="more">2 people</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="histEmpty" style="display:none">
+        <div class="empty">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>
+          <div class="h">No meetings yet</div>
+          <div class="p">Send the notetaker to a call and the recording shows up here once it finishes.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ----------------------- DETAIL ------------------------ -->
+    <div class="pane" id="paneDetail">
+      <button class="back" onclick="showTab('hist')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+        Back to history
+      </button>
+      <div class="dtitle">Motornomic — sprint review</div>
+      <div class="dmeta">Today, 14:05 · 48 min · requested by you · English</div>
+
+      <div class="linkrow">
+        <a class="btn sm" style="width:auto;flex:1;text-decoration:none" href="#">Watch recording</a>
+        <a class="btn sm outline" style="width:auto;flex:1;text-decoration:none" href="#">Transcript</a>
+      </div>
+
+      <div class="sec">Summary</div>
+      <div class="sumbox">
+        Walked through the garage-ops backlog for the next sprint. Agreed to ship
+        the parts-lookup rewrite first, and to hold the invoicing changes until
+        the migration lands.
+      </div>
+
+      <div class="sec">Action items</div>
+      <div class="sumbox">
+        <ul>
+          <li>Kashif — finish parts-lookup API by Thursday</li>
+          <li>Mishal — design pass on the invoice screen</li>
+          <li>Ali — confirm the migration window with the client</li>
+        </ul>
+      </div>
+
+      <div class="sec">Shared with</div>
+      <div class="picker" style="border:none">
+        <div class="person" style="cursor:default"><div class="avatar">MA</div><div class="meta"><div class="nm">Muhammad Ali Abbas</div><div class="rl">Administrator · requested this</div></div></div>
+        <div class="person" style="cursor:default"><div class="avatar">MK</div><div class="meta"><div class="nm">Muhammad Kashif</div><div class="rl">Full Stack Engineer</div></div></div>
+        <div class="person" style="cursor:default"><div class="avatar">MZ</div><div class="meta"><div class="nm">Mishal Zahra</div><div class="rl">Full Stack Engineer</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var PEOPLE = [
+  { i:'MA', n:'Muhammad Ali Abbas',    r:'Administrator · you', locked:true,  sel:true  },
+  { i:'MZ', n:'Mishal Zahra',          r:'Full Stack Engineer', locked:false, sel:true  },
+  { i:'MK', n:'Muhammad Kashif',       r:'Full Stack Engineer', locked:false, sel:true  },
+  { i:'MA2',n:'Manahil Ashraf',        r:'Product Designer',    locked:false, sel:false },
+  { i:'AS', n:'Muhammad Awab Saghir',  r:'Full Stack Engineer', locked:false, sel:false },
+  { i:'TS', n:'Muhammad Tayyab Sohail',r:'Full Stack Engineer', locked:false, sel:false }
+];
+
+function initials(x){ return x.i.slice(0,2); }
+
+function renderPeople(){
+  var host = document.getElementById('people');
+  host.innerHTML = '';
+  PEOPLE.forEach(function(p, idx){
+    var d = document.createElement('div');
+    d.className = 'person' + (p.sel ? ' sel' : '') + (p.locked ? ' locked' : '');
+    d.onclick = function(){ if(!p.locked){ PEOPLE[idx].sel = !PEOPLE[idx].sel; renderPeople(); } };
+    d.innerHTML =
+      '<div class="avatar">' + initials(p) + '</div>' +
+      '<div class="meta"><div class="nm">' + p.n + '</div><div class="rl">' + p.r + '</div></div>' +
+      '<div class="check">' + (p.sel ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="m5 12 5 5L20 7"/></svg>' : '') + '</div>';
+    host.appendChild(d);
+  });
+}
+
+function openPanel(){ document.getElementById('panel').classList.add('open'); document.getElementById('fab').classList.add('hidden'); }
+function closePanel(){ document.getElementById('panel').classList.remove('open'); document.getElementById('fab').classList.remove('hidden'); }
+
+function showTab(which){
+  ['paneNew','paneHist','paneDetail'].forEach(function(id){ document.getElementById(id).classList.remove('active'); });
+  document.getElementById('tabNew').setAttribute('aria-selected', which === 'new');
+  document.getElementById('tabHist').setAttribute('aria-selected', which !== 'new');
+  document.getElementById('tabs').style.display = 'flex';
+  var sub = document.getElementById('headSub');
+  if (which === 'new')   { document.getElementById('paneNew').classList.add('active');   sub.textContent = 'Send the bot to a live call'; }
+  if (which === 'hist')  { document.getElementById('paneHist').classList.add('active');  sub.textContent = 'Meetings you started or were shared'; }
+  if (which === 'detail'){ document.getElementById('paneDetail').classList.add('active');sub.textContent = 'Meetings you started or were shared'; }
+}
+
+function setState(s){
+  document.getElementById('rateAlert').style.display = 'none';
+  document.getElementById('histList').style.display = 'block';
+  document.getElementById('histEmpty').style.display = 'none';
+  if (s === 'idle')    { closePanel(); return; }
+  openPanel();
+  if (s === 'new')     { showTab('new'); }
+  if (s === 'rate')    { showTab('new'); document.getElementById('rateAlert').style.display = 'flex'; }
+  if (s === 'history') { showTab('hist'); }
+  if (s === 'detail')  { showTab('detail'); }
+  if (s === 'empty')   { showTab('hist'); document.getElementById('histList').style.display = 'none'; document.getElementById('histEmpty').style.display = 'block'; }
+}
+
+function toggleTheme(){ document.documentElement.classList.toggle('dark'); }
+
+renderPeople();
+setState('new');
+</script>
+</body>
+</html>

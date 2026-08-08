@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -279,6 +279,116 @@ export type Database = {
             foreignKeyName: "employment_details_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fireflies_meeting_shares: {
+        Row: {
+          created_at: string
+          employee_id: string
+          meeting_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          meeting_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          meeting_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fireflies_meeting_shares_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fireflies_meeting_shares_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "fireflies_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fireflies_meetings: {
+        Row: {
+          audio_url: string | null
+          bot_joined_at: string | null
+          completed_at: string | null
+          correlation_token: string
+          created_at: string
+          duration_minutes: number | null
+          failure_reason: string | null
+          fireflies_meeting_id: string | null
+          id: string
+          language: string
+          meeting_date: string | null
+          meeting_link: string
+          requested_by: string
+          status: Database["public"]["Enums"]["fireflies_meeting_status"]
+          summary: Json | null
+          title: string
+          transcript_sentences: Json | null
+          transcript_url: string | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          bot_joined_at?: string | null
+          completed_at?: string | null
+          correlation_token: string
+          created_at?: string
+          duration_minutes?: number | null
+          failure_reason?: string | null
+          fireflies_meeting_id?: string | null
+          id?: string
+          language?: string
+          meeting_date?: string | null
+          meeting_link: string
+          requested_by: string
+          status?: Database["public"]["Enums"]["fireflies_meeting_status"]
+          summary?: Json | null
+          title: string
+          transcript_sentences?: Json | null
+          transcript_url?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          bot_joined_at?: string | null
+          completed_at?: string | null
+          correlation_token?: string
+          created_at?: string
+          duration_minutes?: number | null
+          failure_reason?: string | null
+          fireflies_meeting_id?: string | null
+          id?: string
+          language?: string
+          meeting_date?: string | null
+          meeting_link?: string
+          requested_by?: string
+          status?: Database["public"]["Enums"]["fireflies_meeting_status"]
+          summary?: Json | null
+          title?: string
+          transcript_sentences?: Json | null
+          transcript_url?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fireflies_meetings_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -1057,6 +1167,10 @@ export type Database = {
     Functions: {
       accept_onboarding: { Args: never; Returns: undefined }
       calculate_payroll: { Args: { p_run_id: string }; Returns: undefined }
+      can_read_fireflies_meeting: {
+        Args: { p_meeting: string }
+        Returns: boolean
+      }
       create_policy: {
         Args: {
           p_body_html: string
@@ -1178,11 +1292,11 @@ export type Database = {
         }
       }
       run_is_locked: { Args: { p_run_id: string }; Returns: boolean }
-      submit_onboarding: { Args: never; Returns: undefined }
       set_employee_access: {
         Args: { p_disabled: boolean; p_employee_id: string }
         Returns: undefined
       }
+      submit_onboarding: { Args: never; Returns: undefined }
       unlock_payroll: { Args: { p_run_id: string }; Returns: undefined }
       upload_contract: {
         Args: {
@@ -1213,6 +1327,11 @@ export type Database = {
     Enums: {
       account_status: "invited" | "onboarding" | "active" | "disabled"
       employment_type: "full_time" | "part_time" | "contract" | "internship"
+      fireflies_meeting_status:
+        | "requested"
+        | "bot_joined"
+        | "completed"
+        | "failed"
       leave_type: "paid" | "sick" | "unpaid" | "half_day"
       medical_for: "self" | "parent" | "spouse" | "child"
       medical_payment_status: "unpaid" | "paid"
@@ -1358,6 +1477,12 @@ export const Constants = {
     Enums: {
       account_status: ["invited", "onboarding", "active", "disabled"],
       employment_type: ["full_time", "part_time", "contract", "internship"],
+      fireflies_meeting_status: [
+        "requested",
+        "bot_joined",
+        "completed",
+        "failed",
+      ],
       leave_type: ["paid", "sick", "unpaid", "half_day"],
       medical_for: ["self", "parent", "spouse", "child"],
       medical_payment_status: ["unpaid", "paid"],
