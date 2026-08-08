@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -45,35 +45,16 @@ const categoryOptions = Object.entries(policyCategoryLabels).map(
 type CreatePolicyDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  existingCategories: PolicyCategoryInput[];
 };
 
 export function CreatePolicyDialog({
   open,
   onOpenChange,
-  existingCategories,
 }: CreatePolicyDialogProps) {
   const router = useRouter();
   // CKEditor only reads its `data` prop on mount, so a PDF import has to
   // force a fresh mount for the imported content to appear.
   const [editorKey, setEditorKey] = useState(0);
-  const usedCategoryKey = existingCategories.join(',');
-  const usedCategories = useMemo(
-    () => new Set(existingCategories),
-    [usedCategoryKey],
-  );
-  const selectableCategories = useMemo(
-    () =>
-      categoryOptions.map((option) => ({
-        ...option,
-        disabled: usedCategories.has(option.value),
-      })),
-    [usedCategories],
-  );
-  const firstAvailableCategory = selectableCategories.find(
-    (option) => !option.disabled,
-  )?.value;
-  const allCategoriesUsed = !firstAvailableCategory;
 
   const form = useForm<CreatePolicyInput>({
     resolver: zodResolver(createPolicySchema),
@@ -85,21 +66,9 @@ export function CreatePolicyDialog({
   });
 
   const resetForm = () => {
-    form.reset({
-      title: '',
-      category: firstAvailableCategory ?? 'general',
-      contentHtml: '',
-    });
+    form.reset({ title: '', category: 'general', contentHtml: '' });
     setEditorKey((key) => key + 1);
   };
-
-  useEffect(() => {
-    if (!open || !firstAvailableCategory) return;
-
-    if (usedCategories.has(form.getValues('category'))) {
-      form.setValue('category', firstAvailableCategory, { shouldDirty: false });
-    }
-  }, [firstAvailableCategory, form, open, usedCategories]);
 
   const { execute, isPending } = useCreatePolicy(
     (policyId) => {
@@ -108,7 +77,7 @@ export function CreatePolicyDialog({
       resetForm();
       router.push(paths.admin.policyDetail(policyId));
     },
-    (message) => form.setError('category', { message }),
+    (message) => form.setError('title', { message }),
   );
 
   const handlePdfImported = (html: string, fileName: string) => {
@@ -168,19 +137,14 @@ export function CreatePolicyDialog({
                   <ControlledSelect<CreatePolicyInput>
                     name='category'
                     label='Category'
-                    options={selectableCategories}
+                    options={categoryOptions}
                     placeholder='Select category'
                   />
                   <p className='text-xs text-muted-foreground'>
-                    One document is allowed per category.
+                    Used to group policies. Several may share a category.
                   </p>
                 </div>
               </div>
-              {allCategoriesUsed && (
-                <p className='text-sm text-muted-foreground'>
-                  A policy document has already been created for every category.
-                </p>
-              )}
               <div className='flex justify-end'>
                 <ImportPdfButton onImported={handlePdfImported} />
               </div>
@@ -203,11 +167,7 @@ export function CreatePolicyDialog({
               >
                 Cancel
               </Button>
-              <Button
-                type='submit'
-                isLoading={isPending}
-                disabled={allCategoriesUsed}
-              >
+              <Button type='submit' isLoading={isPending}>
                 Publish
               </Button>
             </SheetFooter>

@@ -385,6 +385,8 @@ export type Database = {
           employee_id: string
           expense_date: string
           id: string
+          paid_at: string | null
+          payment_status: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id: string | null
           rejection_reason: string | null
           reviewed_at: string | null
@@ -401,6 +403,8 @@ export type Database = {
           employee_id: string
           expense_date: string
           id?: string
+          paid_at?: string | null
+          payment_status?: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
@@ -417,6 +421,8 @@ export type Database = {
           employee_id?: string
           expense_date?: string
           id?: string
+          paid_at?: string | null
+          payment_status?: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
@@ -528,6 +534,8 @@ export type Database = {
           employee_id: string
           hours: number
           id: string
+          paid_at: string | null
+          payment_status: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id: string | null
           project_id: string
           rejection_reason: string | null
@@ -543,6 +551,8 @@ export type Database = {
           employee_id: string
           hours: number
           id?: string
+          paid_at?: string | null
+          payment_status?: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id?: string | null
           project_id: string
           rejection_reason?: string | null
@@ -558,6 +568,8 @@ export type Database = {
           employee_id?: string
           hours?: number
           id?: string
+          paid_at?: string | null
+          payment_status?: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id?: string | null
           project_id?: string
           rejection_reason?: string | null
@@ -1209,6 +1221,7 @@ export type Database = {
       employment_type: "full_time" | "part_time" | "contract" | "internship"
       leave_type: "paid" | "sick" | "unpaid" | "half_day"
       medical_for: "self" | "parent" | "spouse" | "child"
+      medical_payment_status: "unpaid" | "paid"
       notification_status: "pending" | "sent" | "failed"
       payroll_status: "open" | "locked"
       policy_category: "leave" | "medical" | "overtime" | "general"
@@ -1353,6 +1366,7 @@ export const Constants = {
       employment_type: ["full_time", "part_time", "contract", "internship"],
       leave_type: ["paid", "sick", "unpaid", "half_day"],
       medical_for: ["self", "parent", "spouse", "child"],
+      medical_payment_status: ["unpaid", "paid"],
       notification_status: ["pending", "sent", "failed"],
       payroll_status: ["open", "locked"],
       policy_category: ["leave", "medical", "overtime", "general"],

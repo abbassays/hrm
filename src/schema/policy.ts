@@ -9,8 +9,8 @@ export const policyCategorySchema = z.enum([
 
 export type PolicyCategoryInput = z.infer<typeof policyCategorySchema>;
 
-export const DUPLICATE_CATEGORY_MESSAGE =
-  'A policy document already exists for this category.';
+export const DUPLICATE_TITLE_MESSAGE =
+  'A policy document with this title already exists.';
 
 export const createPolicySchema = z.object({
   title: z.string().trim().min(2, 'Enter a policy title').max(200),

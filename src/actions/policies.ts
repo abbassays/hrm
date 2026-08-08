@@ -13,7 +13,7 @@ import {
   acknowledgePolicySchema,
   createPolicySchema,
   deletePolicySchema,
-  DUPLICATE_CATEGORY_MESSAGE,
+  DUPLICATE_TITLE_MESSAGE,
   publishPolicyVersionSchema,
 } from '@/schema/policy';
 import { markReviewedSchema } from '@/schema/policy-linkage';
@@ -44,11 +44,12 @@ export const createPolicy = authActionClient
       p_body_html: sanitizeHtml(parsedInput.contentHtml),
     });
     if (error) {
-      // The category is uniquely constrained in the database as a final guard
-      // against two admins opening the sheet at the same time.
+      // `slug` is the only unique column left on `policies` — it is derived
+      // from the title — so a 23505 here means the title is already taken, not
+      // the category. Categories are a grouping label and may repeat.
       if (error.code === '23505') {
         returnValidationErrors(createPolicySchema, {
-          category: { _errors: [DUPLICATE_CATEGORY_MESSAGE] },
+          title: { _errors: [DUPLICATE_TITLE_MESSAGE] },
         });
       }
       throw new Error(error.message);

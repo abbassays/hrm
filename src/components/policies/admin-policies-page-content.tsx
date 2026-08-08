@@ -145,11 +145,7 @@ export function AdminPoliciesPageContent() {
         </TabsContent>
       </Tabs>
 
-      <CreatePolicyDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        existingCategories={(policies ?? []).map((policy) => policy.category)}
-      />
+      <CreatePolicyDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>
   );
 }

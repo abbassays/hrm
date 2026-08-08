@@ -12,7 +12,7 @@
     "lint": "next lint --fix",
     "format": "prettier --write .",
     "style": "pnpm lint && pnpm format",
-    "supa:types": "supabase gen types --lang=typescript --project-id leslengflrizmqkopkya --schema public > ./src/types/supabase.ts",
+    "supa:types": "supabase gen types --lang=typescript --project-id urwywgpmflxdruklrnyk --schema public > ./src/types/supabase.ts",
     "email": "email dev --dir src/emails --port 3001",
     "email:export": "email export --dir src/emails --outDir out/emails",
     "storybook": "storybook dev -p 6006",

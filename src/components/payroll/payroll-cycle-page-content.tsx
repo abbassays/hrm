@@ -214,6 +214,21 @@ export function PayrollCyclePageContent({
                   disabled={busy}
                 />
               )}
+              {/* Draft figures go stale the moment anything they depend on is
+                  approved after the run was first calculated. Without this the
+                  only way to refresh was the empty state's button, which
+                  disappears as soon as payslips exist. */}
+              {!locked && gridRows.length > 0 && (
+                <Button
+                  variant='outline'
+                  iconLeft={Calculator}
+                  disabled={busy}
+                  isLoading={calc.isPending}
+                  onClick={() => calc.execute({ run_id: run.id })}
+                >
+                  Recalculate
+                </Button>
+              )}
               {!locked ? (
                 <ConfirmDialog
                   trigger={
