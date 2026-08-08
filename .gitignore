@@ -55,3 +55,7 @@ storybook-static
 # vendored agent-skill reference docs — synced by an external tool, not
 # project source; tracking them just produces recurring formatting-only diffs
 .agents/skills/
+
+# historical-data backfill: manifests and pre-state snapshots (contains
+# employee identifiers; rollback evidence, not project source)
+.backfill/
