@@ -165,7 +165,8 @@ export function PayslipsTable({
   }
 
   return (
-    <div className='flex flex-col gap-3'>
+    // Net pay, base salary and deductions — masked in session replays.
+    <div className='flex flex-col gap-3' data-ph-mask>
       <div
         className={cn(
           'flex items-center gap-3',

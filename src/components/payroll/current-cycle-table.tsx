@@ -66,7 +66,8 @@ export function CurrentCycleTable({
   const allSelected = rows.length > 0 && selectedIds.size === rows.length;
 
   return (
-    <div className='overflow-x-auto rounded-lg border border-border'>
+    // Salaries, overtime pay and net figures — masked in session replays.
+    <div className='overflow-x-auto rounded-lg border border-border' data-ph-mask>
       <Table>
         <TableHeader>
           <TableRow className='hover:bg-transparent'>

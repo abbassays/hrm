@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
+import { paths } from '@/constants/paths';
 import { PosthogEventKeys } from '@/constants/posthog-events';
 
 type TUserIdentify = {
@@ -27,7 +28,7 @@ export default function Identify() {
         });
       } else if (event === 'SIGNED_OUT') {
         posthog.reset();
-        window.location.replace('/auth/sign-in');
+        window.location.replace(paths.auth.login);
       }
     });
 

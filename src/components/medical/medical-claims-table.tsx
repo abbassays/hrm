@@ -170,7 +170,8 @@ export function MedicalClaimsTable({
   }
 
   return (
-    <div className='flex flex-col gap-3'>
+    // Claim amounts and medical descriptions — masked in session replays.
+    <div className='flex flex-col gap-3' data-ph-mask>
       {!!title && <h2 className='text-xl font-semibold'>{title}</h2>}
       {filtered.length === 0 ? (
         <EmptyState

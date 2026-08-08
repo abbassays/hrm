@@ -63,7 +63,8 @@ export function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
   }
 
   return (
-    <>
+    // CNIC, date of birth, address, phone, bank details — masked in replays.
+    <div data-ph-mask>
       <div>
         <Link href={paths.admin.employees}>
           <Button variant='ghost' size='sm' iconLeft={ArrowLeft}>
@@ -192,6 +193,6 @@ export function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
           <EmployeeContractTab employeeId={employee.id} />
         </TabsContent>
       </Tabs>
-    </>
+    </div>
   );
 }
