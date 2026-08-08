@@ -12,8 +12,6 @@ export type NotetakerMeeting = {
   status: 'requested' | 'bot_joined' | 'completed' | 'failed';
   failureReason: string | null;
   transcriptUrl: string | null;
-  summary: Record<string, unknown> | null;
-  sentences: { speaker_name: string | null; text: string | null }[] | null;
   durationMinutes: number | null;
   meetingDate: string | null;
   createdAt: string;
@@ -33,7 +31,7 @@ const fetchMeetings = authQuery(async ({ supabase }) => {
     .from('fireflies_meetings')
     .select(
       `id, title, meeting_link, language, status, failure_reason,
-       transcript_url, summary, transcript_sentences, duration_minutes,
+       transcript_url, duration_minutes,
        meeting_date, created_at, requested_by,
        requester:employees!fireflies_meetings_requested_by_fkey ( full_name ),
        fireflies_meeting_shares ( employees ( id, full_name ) )`,
@@ -54,11 +52,6 @@ const fetchMeetings = authQuery(async ({ supabase }) => {
       status: row.status,
       failureReason: row.failure_reason,
       transcriptUrl: row.transcript_url,
-      summary: (row.summary as Record<string, unknown> | null) ?? null,
-      sentences:
-        (row.transcript_sentences as
-          | { speaker_name: string | null; text: string | null }[]
-          | null) ?? null,
       durationMinutes: row.duration_minutes,
       meetingDate: row.meeting_date,
       createdAt: row.created_at,

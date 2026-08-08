@@ -1,7 +1,7 @@
 'use client';
 
 import { format } from 'date-fns';
-import { Check, ChevronLeft, Loader2, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -25,10 +25,13 @@ import { FIREFLIES_LANGUAGES } from '@/schema/fireflies';
 /**
  * Floating notetaker widget, mounted on every signed-in surface.
  *
- * Three views inside one panel: summon, history, and a single recording. The
- * recording view renders the stored transcript and summary rather than linking
- * out — employees have no Fireflies seat, and the media URLs are CloudFront
- * signed URLs that 403 for everyone.
+ * Two views: summon a bot, and the history of meetings you started or were
+ * shared on. A finished recording is read on Fireflies — its row links straight
+ * out — so nothing about the meeting's contents is rendered here.
+ *
+ * Note that `app.fireflies.ai` requires a Fireflies seat, which only the
+ * account owner has. The transcript is still captured and stored server-side by
+ * the webhook, so surfacing it in-app later needs no re-fetch.
  */
 
 const STATUS: Record<
@@ -44,7 +47,6 @@ const STATUS: Record<
 export function NotetakerWidget() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<'new' | 'history'>('new');
-  const [openMeetingId, setOpenMeetingId] = useState<string | null>(null);
 
   const [link, setLink] = useState('');
   const [title, setTitle] = useState('');
@@ -67,7 +69,6 @@ export function NotetakerWidget() {
     () => meetings?.some((meeting) => meeting.status === 'bot_joined') ?? false,
     [meetings],
   );
-  const openMeeting = meetings?.find((meeting) => meeting.id === openMeetingId);
 
   // Everyone but the requester — they are added server-side regardless, so
   // offering them as a toggle would imply they could be left out.
@@ -129,7 +130,6 @@ export function NotetakerWidget() {
               className='ml-auto size-8'
               onClick={() => {
                 setOpen(false);
-                setOpenMeetingId(null);
               }}
               aria-label='Close'
             >
@@ -144,7 +144,6 @@ export function NotetakerWidget() {
                 type="button"
                 onClick={() => {
                   setTab(value);
-                  setOpenMeetingId(null);
                 }}
                 className={cn(
                   '-mb-px border-b-2 px-3 pb-2.5 pt-1.5 text-[13px] font-medium',
@@ -292,7 +291,7 @@ export function NotetakerWidget() {
               </div>
             )}
 
-            {tab === 'history' && !openMeeting && (
+            {tab === 'history' && (
               <>
                 {isLoading ? (
                   <div className="flex flex-col gap-2">
@@ -308,15 +307,27 @@ export function NotetakerWidget() {
                     </p>
                   </div>
                 ) : (
-                  meetings.map((meeting) => (
-                    <button
+                  meetings.map((meeting) => {
+                    // A finished recording is read on Fireflies, not in here.
+                    const href =
+                      meeting.status === 'completed'
+                        ? meeting.transcriptUrl
+                        : null;
+                    const Row = href ? 'a' : 'div';
+                    return (
+                    <Row
                       key={meeting.id}
-                      type="button"
-                      onClick={() =>
-                        meeting.status === 'completed' &&
-                        setOpenMeetingId(meeting.id)
-                      }
-                      className="mb-2 block w-full rounded-md border border-border p-3 text-left hover:border-primary/50"
+                      {...(href
+                        ? {
+                            href,
+                            target: '_blank',
+                            rel: 'noopener noreferrer',
+                          }
+                        : {})}
+                      className={cn(
+                        'mb-2 block w-full rounded-md border border-border p-3 text-left',
+                        href && 'hover:border-primary/50',
+                      )}
                     >
                       <div className="flex items-start gap-2">
                         <div className="min-w-0 flex-1">
@@ -355,101 +366,13 @@ export function NotetakerWidget() {
                           {meeting.sharedWith.length} with access
                         </span>
                       </div>
-                    </button>
-                  ))
+                    </Row>
+                    );
+                  })
                 )}
               </>
             )}
 
-            {openMeeting && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setOpenMeetingId(null)}
-                  className="mb-3 inline-flex items-center gap-1 text-[12.5px] text-muted-foreground hover:text-foreground"
-                >
-                  <ChevronLeft className="size-3.5" aria-hidden /> Back to history
-                </button>
-                <p className="text-[15px] font-bold">{openMeeting.title}</p>
-                <p className="mb-3 mt-0.5 text-[11.5px] text-muted-foreground">
-                  {openMeeting.meetingDate
-                    ? format(new Date(openMeeting.meetingDate), 'MMM d, HH:mm')
-                    : format(new Date(openMeeting.createdAt), 'MMM d, HH:mm')}
-                  {openMeeting.durationMinutes
-                    ? ` · ${Math.round(openMeeting.durationMinutes)} min`
-                    : ''}
-                  {openMeeting.requestedByName
-                    ? ` · by ${openMeeting.requestedByName}`
-                    : ''}
-                </p>
-
-                {typeof openMeeting.summary?.overview === 'string' && (
-                  <>
-                    <p className="mb-1.5 mt-3.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Summary
-                    </p>
-                    <div className="rounded-md border border-border bg-muted/60 p-3 text-[12.5px]">
-                      {openMeeting.summary.overview as string}
-                    </div>
-                  </>
-                )}
-
-                {Array.isArray(openMeeting.summary?.action_items) && (
-                  <>
-                    <p className="mb-1.5 mt-3.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Action items
-                    </p>
-                    <ul className="list-disc rounded-md border border-border bg-muted/60 p-3 pl-7 text-[12.5px]">
-                      {(openMeeting.summary.action_items as string[]).map(
-                        (item, index) => (
-                          <li key={index} className="mb-1">
-                            {item}
-                          </li>
-                        ),
-                      )}
-                    </ul>
-                  </>
-                )}
-
-                {openMeeting.sentences?.length ? (
-                  <>
-                    <p className="mb-1.5 mt-3.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Transcript
-                    </p>
-                    <div className="max-h-72 overflow-y-auto rounded-md border border-border bg-muted/60 p-3 text-[12.5px]">
-                      {openMeeting.sentences.map((line, index) => (
-                        <p key={index} className="mb-1.5">
-                          <span className="font-semibold">
-                            {line.speaker_name ?? 'Speaker'}:
-                          </span>{' '}
-                          {line.text}
-                        </p>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <p className="mt-3.5 flex items-center gap-2 text-[12.5px] text-muted-foreground">
-                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                    Transcript is still processing.
-                  </p>
-                )}
-
-                <p className="mb-1.5 mt-3.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Shared with
-                </p>
-                <div className="flex flex-col gap-1.5">
-                  {openMeeting.sharedWith.map((person) => (
-                    <div key={person.id} className="flex items-center gap-2.5">
-                      <EmployeeAvatar
-                        employeeId={person.id}
-                        fullName={person.fullName ?? ''}
-                      />
-                      <p className="text-[13px] font-medium">{person.fullName}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
