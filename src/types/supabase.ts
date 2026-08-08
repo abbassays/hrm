@@ -534,8 +534,6 @@ export type Database = {
           employee_id: string
           hours: number
           id: string
-          paid_at: string | null
-          payment_status: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id: string | null
           project_id: string
           rejection_reason: string | null
@@ -551,8 +549,6 @@ export type Database = {
           employee_id: string
           hours: number
           id?: string
-          paid_at?: string | null
-          payment_status?: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id?: string | null
           project_id: string
           rejection_reason?: string | null
@@ -568,8 +564,6 @@ export type Database = {
           employee_id?: string
           hours?: number
           id?: string
-          paid_at?: string | null
-          payment_status?: Database["public"]["Enums"]["medical_payment_status"]
           payroll_run_id?: string | null
           project_id?: string
           rejection_reason?: string | null
