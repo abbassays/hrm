@@ -3,6 +3,7 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 
+import { EmployeeAvatar } from '@/components/hrm/employee-avatar';
 import { StatusBadge } from '@/components/hrm/status-badge';
 import { CenteredCell } from '@/components/ui/data-table/centered-cell';
 import { DataTableColumnHeader } from '@/components/ui/data-table/column-header';
@@ -35,13 +36,20 @@ export function useEmployeesTableColumns() {
           />
         ),
         cell: ({ row }) => (
-          <div className='flex max-w-[220px] flex-col'>
-            <span className='truncate font-medium'>
-              {row.original.fullName}
-            </span>
-            <span className='truncate text-xs text-muted-foreground'>
-              {row.original.email}
-            </span>
+          <div className='flex max-w-[260px] items-center gap-2.5'>
+            <EmployeeAvatar
+              employeeId={row.original.id}
+              fullName={row.original.fullName}
+              size='lg'
+            />
+            <div className='flex min-w-0 flex-col'>
+              <span className='truncate font-medium'>
+                {row.original.fullName}
+              </span>
+              <span className='truncate text-xs text-muted-foreground'>
+                {row.original.email}
+              </span>
+            </div>
           </div>
         ),
         enableSorting: false,

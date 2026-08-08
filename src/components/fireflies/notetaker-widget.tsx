@@ -13,6 +13,7 @@ import {
   useNotetakerMeetings,
 } from '@/hooks/queries/fireflies';
 
+import { EmployeeAvatar } from '@/components/hrm/employee-avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,29 +40,6 @@ const STATUS: Record<
   requested: { label: 'REQUESTED', className: 'bg-muted text-muted-foreground' },
   failed: { label: 'FAILED', className: 'bg-destructive/15 text-destructive' },
 };
-
-function initials(name: string | null) {
-  if (!name) return '??';
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('');
-}
-
-function Avatar({ name, className }: { name: string | null; className?: string }) {
-  return (
-    <span
-      className={cn(
-        'grid size-7 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground',
-        className,
-      )}
-    >
-      {initials(name)}
-    </span>
-  );
-}
 
 export function NotetakerWidget() {
   const [open, setOpen] = useState(false);
@@ -239,7 +217,10 @@ export function NotetakerWidget() {
                   <div className="overflow-hidden rounded-md border border-input">
                     <div className="max-h-[152px] overflow-y-auto">
                       <div className="flex items-center gap-2.5 px-2.5 py-2 opacity-60">
-                        <Avatar name={me?.full_name ?? null} className="size-[26px]" />
+                        <EmployeeAvatar
+                          employeeId={me?.id ?? ''}
+                          fullName={me?.full_name ?? 'You'}
+                        />
                         <div className="min-w-0">
                           <p className="truncate text-[13px] font-medium">
                             {me?.full_name ?? 'You'}
@@ -261,7 +242,10 @@ export function NotetakerWidget() {
                             onClick={() => toggle(employee.id)}
                             className="flex w-full items-center gap-2.5 border-t border-border px-2.5 py-2 text-left hover:bg-muted"
                           >
-                            <Avatar name={employee.fullName} className="size-[26px]" />
+                            <EmployeeAvatar
+                              employeeId={employee.id}
+                              fullName={employee.fullName}
+                            />
                             <div className="min-w-0">
                               <p className="truncate text-[13px] font-medium">
                                 {employee.fullName}
@@ -359,10 +343,12 @@ export function NotetakerWidget() {
                       </div>
                       <div className="mt-2 flex items-center">
                         {meeting.sharedWith.slice(0, 4).map((person) => (
-                          <Avatar
+                          <EmployeeAvatar
                             key={person.id}
-                            name={person.fullName}
-                            className="-mr-1.5 size-[21px] border-2 border-card text-[9px]"
+                            employeeId={person.id}
+                            fullName={person.fullName ?? ''}
+                            size="sm"
+                            className="-mr-1.5 border-2 border-card"
                           />
                         ))}
                         <span className="ml-3 text-[11px] text-muted-foreground">
@@ -454,7 +440,10 @@ export function NotetakerWidget() {
                 <div className="flex flex-col gap-1.5">
                   {openMeeting.sharedWith.map((person) => (
                     <div key={person.id} className="flex items-center gap-2.5">
-                      <Avatar name={person.fullName} className="size-[26px]" />
+                      <EmployeeAvatar
+                        employeeId={person.id}
+                        fullName={person.fullName ?? ''}
+                      />
                       <p className="text-[13px] font-medium">{person.fullName}</p>
                     </div>
                   ))}

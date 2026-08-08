@@ -11,6 +11,7 @@ import {
 import { usePendingApprovals } from '@/hooks/queries/pending-approvals';
 
 import { DetailSheet } from '@/components/hrm/detail-sheet';
+import { EmployeeAvatar } from '@/components/hrm/employee-avatar';
 import { EmptyState } from '@/components/hrm/empty-state';
 import { StatusBadge } from '@/components/hrm/status-badge';
 import { ProofFilesList } from '@/components/medical/proof-files-list';
@@ -124,7 +125,11 @@ export function ApprovalsQueue() {
               key={item.id}
               className='flex flex-wrap items-center justify-between gap-3 px-4 py-3'
             >
-              <div className='flex min-w-0 flex-col gap-0.5'>
+              <EmployeeAvatar
+                employeeId={item.employeeId}
+                fullName={item.employeeName}
+              />
+              <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
                 <div className='flex items-center gap-2'>
                   <p className='truncate text-sm font-medium'>
                     {item.employeeName}

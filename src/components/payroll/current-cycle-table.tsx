@@ -2,6 +2,7 @@ import { RotateCcw } from 'lucide-react';
 
 import { type RunPayslipRow, runRowToPayslip } from '@/hooks/queries/payroll';
 
+import { EmployeeAvatar } from '@/components/hrm/employee-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -146,7 +147,14 @@ export function CurrentCycleTable({
                 </TableCell>
 
                 <TableCell className='font-medium'>
-                  {row.employeeName || '—'}
+                  <span className='flex items-center gap-2.5'>
+                    <EmployeeAvatar
+                      employeeId={row.employeeId}
+                      fullName={row.employeeName}
+                      size='sm'
+                    />
+                    {row.employeeName || '—'}
+                  </span>
                 </TableCell>
                 <TableCell className='border-l border-border text-center'>
                   {formatCurrency(row.baseSalary)}

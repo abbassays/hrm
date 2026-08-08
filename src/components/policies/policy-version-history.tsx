@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { CheckCircle2, CircleDashed, Eye, History } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { EmployeeAvatar } from '@/components/hrm/employee-avatar';
 import {
   Accordion,
   AccordionContent,
@@ -26,7 +27,6 @@ import {
 } from '@/components/ui/tooltip';
 
 import { PolicyContent } from './policy-content';
-import { PolicyEmployeeAvatar } from './policy-employee-avatar';
 
 import {
   EmployeeListItem,
@@ -197,7 +197,7 @@ export function PolicyVersionHistory({
                         className='flex items-center justify-between gap-3 bg-muted/30 px-3 py-2.5'
                       >
                         <span className='flex items-center gap-2.5'>
-                          <PolicyEmployeeAvatar
+                          <EmployeeAvatar
                             employeeId={employee.id}
                             fullName={employee.fullName}
                           />
