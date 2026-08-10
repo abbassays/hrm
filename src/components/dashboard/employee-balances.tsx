@@ -140,13 +140,14 @@ export function EmployeeBalances() {
     leaveBalance && leaveBalance.poolTotal > 0
       ? Math.min(100, (leaveBalance.used / leaveBalance.poolTotal) * 100)
       : 0;
-  const medicalRemaining = Math.max(
-    0,
-    (medicalBalance?.cap ?? 0) - (medicalBalance?.accrued ?? 0),
-  );
+  // `available` is what an employee can actually claim right now; `accrued` is
+  // the lifetime credited total, which legitimately exceeds the cap once the
+  // balance has been spent down and topped back up. Showing accrued here both
+  // overstated the claimable amount and, past the cap, read as "57,000 of
+  // 50,000".
   const medicalProgress =
     medicalBalance && medicalBalance.cap > 0
-      ? Math.min(100, (medicalBalance.accrued / medicalBalance.cap) * 100)
+      ? Math.min(100, (medicalBalance.available / medicalBalance.cap) * 100)
       : 0;
 
   if (leaveLoading || medicalLoading || !leaveBalance || !medicalBalance) {
@@ -173,11 +174,11 @@ export function EmployeeBalances() {
       <EmployeeDashboardCard
         title='Medical Allowance'
         icon={HeartPulse}
-        value={formatCurrency(medicalBalance.accrued) || '0'}
+        value={formatCurrency(medicalBalance.available) || '0'}
         secondary={`of ${formatCurrency(medicalBalance.cap)} cap`}
         progress={medicalProgress}
-        progressLabel={`${formatCurrency(medicalBalance.accrued)} available of ${formatCurrency(medicalBalance.cap)}`}
-        footer={`${formatCurrency(medicalRemaining)} remaining · ${formatCurrency(medicalBalance.monthlyAccrual)}/month`}
+        progressLabel={`${formatCurrency(medicalBalance.available)} available of ${formatCurrency(medicalBalance.cap)}`}
+        footer={`${formatCurrency(medicalBalance.spent)} claimed to date · ${formatCurrency(medicalBalance.monthlyAccrual)}/month accrual`}
       />
       <Link
         href={paths.employee.payslips}
