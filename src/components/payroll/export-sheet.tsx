@@ -21,20 +21,19 @@ import {
 import { defaultWiseReference } from '@/lib/payroll/wise-csv';
 
 import {
+  DEFAULT_BALANCE_CURRENCY,
   EXPORT_PROVIDER_DESCRIPTIONS,
   EXPORT_PROVIDER_LABELS,
   EXPORT_PROVIDERS,
   type ExportProvider,
 } from '@/constants/payroll-export';
-import {
-  type WiseReferenceInput,
-  wiseReferenceSchema,
-} from '@/schema/payroll-export';
+import { type WiseFileInput, wiseFileSchema } from '@/schema/payroll-export';
 
 import { BalanceBreakdown } from './balance-breakdown';
 import { ExportCurrencyTable } from './export-currency-table';
 import { ExportProviderDialog } from './export-provider-dialog';
-import { WiseReferenceForm } from './wise-reference-form';
+import { WiseExportInfo } from './wise-export-info';
+import { WiseFileForm } from './wise-file-form';
 
 import { type PayrollExportRow } from '@/types/hrm';
 
@@ -54,13 +53,26 @@ export function ExportSheet({
   const [open, setOpen] = useState(false);
   const [provider, setProvider] = useState<ExportProvider>(EXPORT_PROVIDERS[0]);
   const selection = useExportCurrencySelection(rows);
-  const { includedRows, excludedIds, breakdown } = selection;
+  const { includedRows, excludedIds } = selection;
   const providerLabel = EXPORT_PROVIDER_LABELS[provider];
+  const isWise = provider === 'wise';
 
-  const form = useForm<WiseReferenceInput>({
-    resolver: zodResolver(wiseReferenceSchema),
-    defaultValues: { paymentReference: defaultWiseReference(periodMonth) },
+  const form = useForm<WiseFileInput>({
+    resolver: zodResolver(wiseFileSchema),
+    defaultValues: {
+      sourceCurrency: DEFAULT_BALANCE_CURRENCY,
+      paymentReference: defaultWiseReference(periodMonth),
+    },
   });
+  // Wise takes one source currency per file, so its breakdown is one group.
+  const wiseBreakdown = [
+    {
+      currency: form.watch('sourceCurrency'),
+      count: includedRows.length,
+      totalPkr: includedRows.reduce((sum, row) => sum + row.total, 0),
+    },
+  ].filter((group) => group.count > 0);
+  const breakdown = isWise ? wiseBreakdown : selection.breakdown;
 
   const openFor = (next: ExportProvider) => {
     // Exclusions belong to one provider's file, so they don't carry over.
@@ -78,16 +90,18 @@ export function ExportSheet({
 
   const exportInput = {
     run_id: runId,
-    currencyByEmployee: selection.currencyByEmployee,
     excludedEmployeeIds: [...excludedIds],
   };
-  const handleWiseExport = form.handleSubmit(({ paymentReference }) =>
-    wiseExport.execute({ ...exportInput, paymentReference }),
+  const handleWiseExport = form.handleSubmit((wiseFile) =>
+    wiseExport.execute({ ...exportInput, ...wiseFile }),
   );
-  const handleExport =
-    provider === 'wise'
-      ? handleWiseExport
-      : () => payoneerExport.execute(exportInput);
+  const handleExport = isWise
+    ? handleWiseExport
+    : () =>
+        payoneerExport.execute({
+          ...exportInput,
+          currencyByEmployee: selection.currencyByEmployee,
+        });
 
   return (
     <>
@@ -96,22 +110,26 @@ export function ExportSheet({
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className='flex w-full flex-col gap-4 overflow-y-auto sm:max-w-2xl'>
           <SheetHeader>
-            <SheetTitle>Export for {providerLabel}</SheetTitle>
+            <SheetTitle className='flex items-center gap-1'>
+              Export for {providerLabel}
+              {isWise && <WiseExportInfo />}
+            </SheetTitle>
             <SheetDescription>
-              {EXPORT_PROVIDER_DESCRIPTIONS[provider]} Leave anyone out who
-              isn&apos;t being paid through {providerLabel} this month — it only
-              affects this file.
+              {EXPORT_PROVIDER_DESCRIPTIONS[provider]}
             </SheetDescription>
           </SheetHeader>
 
-          {provider === 'wise' && (
-            <WiseReferenceForm form={form} onSubmit={handleWiseExport} />
-          )}
+          {isWise && <WiseFileForm form={form} onSubmit={handleWiseExport} />}
 
-          <ExportCurrencyTable rows={rows} selection={selection} />
+          <ExportCurrencyTable
+            rows={rows}
+            selection={selection}
+            perRowCurrency={!isWise}
+          />
 
           {breakdown.length > 0 && (
             <BalanceBreakdown
+              title={isWise ? 'Estimated cost' : undefined}
               groups={breakdown}
               providerLabel={providerLabel}
             />

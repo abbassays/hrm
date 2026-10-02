@@ -7,7 +7,13 @@ import {
   storeExportFile,
 } from '@/lib/payroll/export-run';
 import { PAYONEER_HEADER, payoneerFileName } from '@/lib/payroll/payoneer-csv';
-import { toWiseCsv, wiseFileName } from '@/lib/payroll/wise-csv';
+import {
+  needsWiseAddress,
+  toWiseCsv,
+  WISE_RECIPIENT_COUNTRY,
+  wiseFileName,
+  wiseHeader,
+} from '@/lib/payroll/wise-csv';
 import { authActionClient } from '@/lib/server/safe-action';
 
 import {
@@ -18,7 +24,11 @@ import {
 export const exportPayoneer = authActionClient
   .schema(exportPayoneerSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { run, payees, excluded } = await loadExportPayees(ctx, parsedInput);
+    const { currencyByEmployee, ...selection } = parsedInput;
+    const { run, payees, excluded } = await loadExportPayees(ctx, {
+      ...selection,
+      sourceCurrencyFor: (employeeId) => currencyByEmployee[employeeId],
+    });
 
     const dataRows = payees.map((payee) => [
       payee.holderName,
@@ -46,12 +56,28 @@ export const exportPayoneer = authActionClient
 export const exportWise = authActionClient
   .schema(exportWiseSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { run, payees, excluded } = await loadExportPayees(ctx, parsedInput);
+    const { sourceCurrency, paymentReference, ...selection } = parsedInput;
+    // Wise takes one source currency per batch file.
+    const { run, payees, excluded } = await loadExportPayees(ctx, {
+      ...selection,
+      sourceCurrencyFor: () => sourceCurrency,
+    });
+
+    const withAddress = needsWiseAddress(sourceCurrency);
+    const missingAddress = withAddress
+      ? payees.filter(
+          (payee) => !payee.address || !payee.city || !payee.postalCode,
+        )
+      : [];
+    if (missingAddress.length > 0)
+      throw new Error(
+        `Missing address for ${missingAddress.map((payee) => payee.employeeName).join(', ')}. Wise needs a street address, city and postal code to pay from ${sourceCurrency}.`,
+      );
 
     const dataRows = payees.map((payee) => [
       payee.holderName,
       payee.email,
-      parsedInput.paymentReference,
+      paymentReference,
       '',
       'PERSON',
       'target', // amount is what the recipient gets, not what we're debited
@@ -59,6 +85,15 @@ export const exportWise = authActionClient
       payee.sourceCurrency,
       'PKR',
       payee.iban,
+      ...(withAddress
+        ? [
+            WISE_RECIPIENT_COUNTRY,
+            payee.city,
+            payee.address,
+            '',
+            payee.postalCode,
+          ]
+        : []),
     ]);
 
     await saveSourceCurrencies('wise', run.id, payees);
@@ -66,7 +101,7 @@ export const exportWise = authActionClient
     const file = await storeExportFile(ctx, {
       provider: 'wise',
       run,
-      csv: toWiseCsv(dataRows),
+      csv: toWiseCsv(wiseHeader(sourceCurrency), dataRows),
       fileName: wiseFileName,
     });
 

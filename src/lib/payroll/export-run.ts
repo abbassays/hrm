@@ -20,8 +20,8 @@ type ExportContext = {
 
 type ExportSelection = {
   run_id: string;
-  currencyByEmployee: Record<string, string>;
   excludedEmployeeIds: string[];
+  sourceCurrencyFor: (employeeId: string) => string | undefined;
 };
 
 type ExportRun = Pick<Tables<'payroll_runs'>, 'id' | 'period_month'>;
@@ -30,21 +30,32 @@ type ExportPayslipRow = Pick<
   Tables<'payslips'>,
   'employee_id' | 'total_pay'
 > & {
-  employees: Pick<Tables<'employees'>, 'full_name' | 'email'> | null;
+  employees: Pick<
+    Tables<'employees'>,
+    'full_name' | 'email' | 'address' | 'city' | 'postal_code'
+  > | null;
 };
 
 export type ExportPayee = {
   employeeId: string;
+  employeeName: string;
   holderName: string;
   email: string;
   iban: string;
   sourceCurrency: string;
   amount: number;
+  address: string;
+  city: string;
+  postalCode: string;
 };
+
+// Wise rejects line breaks inside a field.
+const singleLine = (value: string | null | undefined) =>
+  (value ?? '').replace(/\s+/g, ' ').trim();
 
 export async function loadExportPayees(
   { supabase, authUser }: ExportContext,
-  { run_id, currencyByEmployee, excludedEmployeeIds }: ExportSelection,
+  { run_id, excludedEmployeeIds, sourceCurrencyFor }: ExportSelection,
 ) {
   if (authUser.user?.app_metadata.role !== 'admin')
     throw new Error('Forbidden');
@@ -61,7 +72,9 @@ export async function loadExportPayees(
   // There is no payslips → bank_details FK for PostgREST to embed.
   const { data: payslipData, error: payslipError } = await supabaseAdmin
     .from('payslips')
-    .select('employee_id, total_pay, employees(full_name, email)')
+    .select(
+      'employee_id, total_pay, employees(full_name, email, address, city, postal_code)',
+    )
     .eq('payroll_run_id', run_id);
   if (payslipError) throw new Error(payslipError.message);
 
@@ -92,7 +105,7 @@ export async function loadExportPayees(
   // Validated before any write, so a bad row leaves nothing behind.
   const payees: ExportPayee[] = rows.map((row) => {
     const name = row.employees?.full_name ?? row.employee_id;
-    const sourceCurrency = currencyByEmployee[row.employee_id];
+    const sourceCurrency = sourceCurrencyFor(row.employee_id);
     const bank = bankByEmployee.get(row.employee_id);
     if (!sourceCurrency)
       throw new Error(`Choose a source currency for ${name}.`);
@@ -102,11 +115,15 @@ export async function loadExportPayees(
       );
     return {
       employeeId: row.employee_id,
+      employeeName: name,
       holderName: bank.account_holder ?? name,
       email: row.employees?.email ?? '',
       iban: bank.iban,
       sourceCurrency,
       amount: row.total_pay,
+      address: singleLine(row.employees?.address),
+      city: singleLine(row.employees?.city),
+      postalCode: singleLine(row.employees?.postal_code),
     };
   });
 

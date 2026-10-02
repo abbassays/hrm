@@ -22,11 +22,13 @@ export type BalanceBreakdownGroup = {
 type BalanceBreakdownProps = {
   groups: BalanceBreakdownGroup[];
   providerLabel: string;
+  title?: string;
 };
 
 export function BalanceBreakdown({
   groups,
   providerLabel,
+  title = 'Breakdown by source balance',
 }: BalanceBreakdownProps) {
   const { data, isPending, isError, error } = useFxRates();
 
@@ -37,7 +39,7 @@ export function BalanceBreakdown({
   return (
     <div className='rounded-lg border border-border px-4 py-3'>
       <p className='mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground'>
-        Breakdown by source balance
+        {title}
       </p>
       <div className='flex flex-col gap-1'>
         {groups.map((group) => {

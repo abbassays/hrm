@@ -22,6 +22,7 @@ import { type PayrollExportRow } from '@/types/hrm';
 
 type ExportCurrencyRowProps = {
   row: PayrollExportRow;
+  perRowCurrency: boolean;
   currency: BalanceCurrency;
   isSelected: boolean;
   isExcluded: boolean;
@@ -32,6 +33,7 @@ type ExportCurrencyRowProps = {
 
 export function ExportCurrencyRow({
   row,
+  perRowCurrency,
   currency,
   isSelected,
   isExcluded,
@@ -40,14 +42,16 @@ export function ExportCurrencyRow({
   onCurrencyChange,
 }: ExportCurrencyRowProps) {
   return (
-    <TableRow>
-      <TableCell>
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={() => onToggleSelected(row.employeeId)}
-          aria-label={`Select ${row.employeeName}`}
-        />
-      </TableCell>
+    <TableRow className='[&>td]:py-2.5'>
+      {perRowCurrency && (
+        <TableCell>
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggleSelected(row.employeeId)}
+            aria-label={`Select ${row.employeeName}`}
+          />
+        </TableCell>
+      )}
       <TableCell
         className={cn(
           'font-medium',
@@ -58,23 +62,25 @@ export function ExportCurrencyRow({
       </TableCell>
       <TableCell
         className={cn(
-          'text-center',
+          'text-right tabular-nums',
           isExcluded && 'text-muted-foreground line-through',
         )}
       >
         {formatCurrency(row.total)}
       </TableCell>
-      <TableCell className='text-center'>
-        <CurrencySelect
-          value={currency}
-          // An excluded row is paid from no balance in this file, so the picker
-          // would be a lie. The choice is kept, and comes back if they're
-          // included again.
-          disabled={isExcluded}
-          onValueChange={(next) => onCurrencyChange(row.employeeId, next)}
-          triggerClassName='mx-auto h-9 w-28'
-        />
-      </TableCell>
+      {perRowCurrency && (
+        <TableCell className='text-center'>
+          <CurrencySelect
+            value={currency}
+            // An excluded row is paid from no balance in this file, so the
+            // picker would be a lie. The choice is kept, and comes back if
+            // they're included again.
+            disabled={isExcluded}
+            onValueChange={(next) => onCurrencyChange(row.employeeId, next)}
+            triggerClassName='mx-auto h-9 w-28'
+          />
+        </TableCell>
+      )}
       <TableCell className='text-center'>
         <Tooltip>
           <TooltipTrigger asChild>

@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-import { WISE_REFERENCE_MAX_LENGTH } from '@/constants/payroll-export';
+import {
+  BALANCE_CURRENCIES,
+  WISE_REFERENCE_MAX_LENGTH,
+} from '@/constants/payroll-export';
 
 const currencyCode = z
   .string()
@@ -21,7 +24,8 @@ export const exportPayoneerSchema = z.object({
 
 export type ExportPayoneerInput = z.infer<typeof exportPayoneerSchema>;
 
-export const wiseReferenceSchema = z.object({
+export const wiseFileSchema = z.object({
+  sourceCurrency: z.enum(BALANCE_CURRENCIES),
   paymentReference: z
     .string()
     .trim()
@@ -32,8 +36,10 @@ export const wiseReferenceSchema = z.object({
     ),
 });
 
-export type WiseReferenceInput = z.infer<typeof wiseReferenceSchema>;
+export type WiseFileInput = z.infer<typeof wiseFileSchema>;
 
-export const exportWiseSchema = exportPayoneerSchema.merge(wiseReferenceSchema);
+export const exportWiseSchema = exportPayoneerSchema
+  .omit({ currencyByEmployee: true })
+  .merge(wiseFileSchema);
 
 export type ExportWiseInput = z.infer<typeof exportWiseSchema>;

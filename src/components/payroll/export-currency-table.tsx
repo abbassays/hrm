@@ -20,17 +20,19 @@ import { type PayrollExportRow } from '@/types/hrm';
 type ExportCurrencyTableProps = {
   rows: PayrollExportRow[];
   selection: ExportCurrencySelection;
+  perRowCurrency: boolean;
 };
 
 export function ExportCurrencyTable({
   rows,
   selection,
+  perRowCurrency,
 }: ExportCurrencyTableProps) {
   const { selectedIds, excludedIds } = selection;
 
   return (
     <>
-      {selectedIds.size > 0 && (
+      {perRowCurrency && selectedIds.size > 0 && (
         <div className='flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2'>
           <span className='text-sm text-muted-foreground'>
             {selectedIds.size} selected
@@ -50,17 +52,23 @@ export function ExportCurrencyTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className='w-10'>
-                <Checkbox
-                  checked={selection.allSelected}
-                  onCheckedChange={selection.toggleAll}
-                  aria-label='Select all rows'
-                />
-              </TableHead>
+              {perRowCurrency && (
+                <TableHead className='w-10'>
+                  <Checkbox
+                    checked={selection.allSelected}
+                    onCheckedChange={selection.toggleAll}
+                    aria-label='Select all rows'
+                  />
+                </TableHead>
+              )}
               <TableHead>Employee</TableHead>
-              <TableHead className='text-center'>Amount (PKR)</TableHead>
-              <TableHead className='text-center'>Pay from</TableHead>
-              <TableHead className='w-16 text-center'>In file</TableHead>
+              <TableHead className='text-right'>Amount (PKR)</TableHead>
+              {perRowCurrency && (
+                <TableHead className='text-center'>Pay from</TableHead>
+              )}
+              <TableHead className='w-20 whitespace-nowrap text-center'>
+                In file
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,6 +76,7 @@ export function ExportCurrencyTable({
               <ExportCurrencyRow
                 key={row.employeeId}
                 row={row}
+                perRowCurrency={perRowCurrency}
                 currency={selection.currencyFor(row.employeeId)}
                 isSelected={selectedIds.has(row.employeeId)}
                 isExcluded={excludedIds.has(row.employeeId)}

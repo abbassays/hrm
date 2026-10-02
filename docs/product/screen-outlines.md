@@ -126,9 +126,9 @@ Answers: "What will this cycle cost, is it correct, and how do I pay it?"
   Medical, Overtime, Total) with manual Days Worked override
 - Review → Lock cycle (confirm; figures become read-only)
 - Export button: pick the provider (Wise or Payoneer) first, then its sheet opens
-- Wise export (per-employee source currency selection, plus one payment
-  reference for the file; recipient PKR) — see `wise-export-spec.md`
-- Payoneer export (same per-employee currency balance selection; recipient PKR)
+- Wise export (one source currency and one payment reference for the file;
+  recipient PKR; USD files add recipient addresses) — see `wise-export-spec.md`
+- Payoneer export (per-employee currency balance selection; recipient PKR)
 - History: past locked cycles → drill into payslips
 
 ### Policies & Contracts `/admin/policies`
