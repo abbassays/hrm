@@ -35,6 +35,7 @@ import { payslipLineItemCopy } from '@/constants/payroll-line-items';
 import { CurrentCycleTable } from './current-cycle-table';
 import { ExportArtifacts } from './export-artifacts';
 import { ExportPayoneerSheet } from './export-payoneer-sheet';
+import { ExportWiseSheet } from './export-wise-sheet';
 
 type PayrollCyclePageContentProps = {
   month: string; // 'YYYY-MM'
@@ -162,7 +163,7 @@ export function PayrollCyclePageContent({
         <>
           <PageHeader
             title={monthLabel}
-            description='Review this run, lock it, then export for Payoneer.'
+            description='Review this run, lock it, then export for Payoneer or Wise.'
           >
             <StatusBadge status={run.status} />
           </PageHeader>
@@ -214,6 +215,14 @@ export function PayrollCyclePageContent({
                   disabled={busy}
                 />
               )}
+              {locked && (
+                <ExportWiseSheet
+                  runId={run.id}
+                  periodMonth={`${month}-01`}
+                  rows={exportRows}
+                  disabled={busy}
+                />
+              )}
               {/* Draft figures go stale the moment anything they depend on is
                   approved after the run was first calculated. Without this the
                   only way to refresh was the empty state's button, which
@@ -237,7 +246,7 @@ export function PayrollCyclePageContent({
                     </Button>
                   }
                   title='Finalize this payroll run?'
-                  description='Figures become read-only once finalized, approved medical and overtime for the month are swept into this run, and employees can see their payslips. No emails go out yet — send them with "Send notifications". You can still export for Payoneer or reopen the run afterward.'
+                  description='Figures become read-only once finalized, approved medical and overtime for the month are swept into this run, and employees can see their payslips. No emails go out yet — send them with "Send notifications". You can still export for Payoneer or Wise, or reopen the run afterward.'
                   confirmLabel='Finalize run'
                   destructive
                   isLoading={lock.isPending}

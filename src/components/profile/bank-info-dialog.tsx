@@ -52,7 +52,7 @@ export function BankInfoDialog({ defaultValues }: BankInfoDialogProps) {
         <DialogHeader>
           <DialogTitle>Edit bank information</DialogTitle>
           <DialogDescription>
-            Payroll and Payoneer exports use these details — double-check before
+            Payroll and payout exports use these details — double-check before
             saving.
           </DialogDescription>
         </DialogHeader>

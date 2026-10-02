@@ -721,6 +721,7 @@ export type Database = {
           exported_by: string | null
           file_path: string | null
           id: string
+          provider: string
           run_id: string
         }
         Insert: {
@@ -728,6 +729,7 @@ export type Database = {
           exported_by?: string | null
           file_path?: string | null
           id?: string
+          provider?: string
           run_id: string
         }
         Update: {
@@ -735,6 +737,7 @@ export type Database = {
           exported_by?: string | null
           file_path?: string | null
           id?: string
+          provider?: string
           run_id?: string
         }
         Relationships: [
@@ -857,6 +860,7 @@ export type Database = {
           total_base: number
           total_pay: number
           unpaid_leave_days: number
+          wise_source_currency: string | null
         }
         Insert: {
           base_salary: number
@@ -886,6 +890,7 @@ export type Database = {
           total_base: number
           total_pay: number
           unpaid_leave_days?: number
+          wise_source_currency?: string | null
         }
         Update: {
           base_salary?: number
@@ -915,6 +920,7 @@ export type Database = {
           total_base?: number
           total_pay?: number
           unpaid_leave_days?: number
+          wise_source_currency?: string | null
         }
         Relationships: [
           {

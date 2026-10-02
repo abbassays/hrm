@@ -4,6 +4,10 @@ import { z } from 'zod';
 import { authQuery } from '@/lib/client/auth-query';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
+import {
+  type ExportProvider,
+  isExportProvider,
+} from '@/constants/payroll-export';
 import { QueryKeys } from '@/constants/query-keys';
 
 import { type Tables } from '@/types/supabase';
@@ -14,6 +18,7 @@ const SIGNED_URL_TTL_SECONDS = 60 * 5; // 5m — long enough to click through to
 export type RunExport = {
   id: string;
   filePath: string;
+  provider: ExportProvider;
   exportedAt: string;
   exportedByName: string;
 };
@@ -36,6 +41,7 @@ const fetchRunExports = authQuery(
     return (data as RunExportRow[]).map((row) => ({
       id: row.id,
       filePath: row.file_path ?? '',
+      provider: isExportProvider(row.provider) ? row.provider : 'payoneer',
       exportedAt: row.exported_at,
       exportedByName: row.employees?.full_name ?? '',
     }));
