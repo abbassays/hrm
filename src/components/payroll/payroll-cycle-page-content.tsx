@@ -162,7 +162,7 @@ export function PayrollCyclePageContent({
         <>
           <PageHeader
             title={monthLabel}
-            description='Review this run, lock it, then export for Payoneer or Wise.'
+            description='Review this run, lock it, then export for Wise or Payoneer.'
           >
             <StatusBadge status={run.status} />
           </PageHeader>
@@ -238,7 +238,7 @@ export function PayrollCyclePageContent({
                     </Button>
                   }
                   title='Finalize this payroll run?'
-                  description='Figures become read-only once finalized, approved medical and overtime for the month are swept into this run, and employees can see their payslips. No emails go out yet — send them with "Send notifications". You can still export for Payoneer or Wise, or reopen the run afterward.'
+                  description='Figures become read-only once finalized, approved medical and overtime for the month are swept into this run, and employees can see their payslips. No emails go out yet — send them with "Send notifications". You can still export for Wise or Payoneer, or reopen the run afterward.'
                   confirmLabel='Finalize run'
                   destructive
                   isLoading={lock.isPending}

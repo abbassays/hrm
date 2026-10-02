@@ -24,7 +24,7 @@ export function AdminPayrollPageContent() {
     <>
       <PageHeader
         title='Payroll'
-        description='Create a run, review the draft, lock it, then export for Payoneer or Wise.'
+        description='Create a run, review the draft, lock it, then export for Wise or Payoneer.'
       >
         <RunCreateDialog />
       </PageHeader>

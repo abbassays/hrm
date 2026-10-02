@@ -125,9 +125,10 @@ Answers: "What will this cycle cost, is it correct, and how do I pay it?"
 - Current cycle: per-employee calculated rows (Base, Days Worked, Total Base,
   Medical, Overtime, Total) with manual Days Worked override
 - Review → Lock cycle (confirm; figures become read-only)
-- Payoneer export (per-employee currency balance selection; recipient PKR)
-- Wise export (same per-employee source currency selection, plus one payment
+- Export button: pick the provider (Wise or Payoneer) first, then its sheet opens
+- Wise export (per-employee source currency selection, plus one payment
   reference for the file; recipient PKR) — see `wise-export-spec.md`
+- Payoneer export (same per-employee currency balance selection; recipient PKR)
 - History: past locked cycles → drill into payslips
 
 ### Policies & Contracts `/admin/policies`
