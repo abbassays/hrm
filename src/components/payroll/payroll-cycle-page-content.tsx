@@ -34,8 +34,7 @@ import { payslipLineItemCopy } from '@/constants/payroll-line-items';
 
 import { CurrentCycleTable } from './current-cycle-table';
 import { ExportArtifacts } from './export-artifacts';
-import { ExportPayoneerSheet } from './export-payoneer-sheet';
-import { ExportWiseSheet } from './export-wise-sheet';
+import { ExportSheet } from './export-sheet';
 
 type PayrollCyclePageContentProps = {
   month: string; // 'YYYY-MM'
@@ -209,14 +208,7 @@ export function PayrollCyclePageContent({
                 />
               )}
               {locked && (
-                <ExportPayoneerSheet
-                  runId={run.id}
-                  rows={exportRows}
-                  disabled={busy}
-                />
-              )}
-              {locked && (
-                <ExportWiseSheet
+                <ExportSheet
                   runId={run.id}
                   periodMonth={`${month}-01`}
                   rows={exportRows}

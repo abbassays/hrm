@@ -1,23 +1,15 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useId, useState } from 'react';
+import { Download } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { useExportPayoneer } from '@/hooks/actions/use-export-payoneer';
 import { useExportWise } from '@/hooks/actions/use-export-wise';
 import { useExportCurrencySelection } from '@/hooks/use-export-currency-selection';
 
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -27,10 +19,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { defaultWiseReference } from '@/lib/payroll/wise-csv';
 
-import { WISE_REFERENCE_MAX_LENGTH } from '@/constants/payroll-export';
+import {
+  DEFAULT_EXPORT_PROVIDER,
+  EXPORT_PROVIDER_DESCRIPTIONS,
+  EXPORT_PROVIDER_LABELS,
+  EXPORT_PROVIDERS,
+  type ExportProvider,
+  isExportProvider,
+} from '@/constants/payroll-export';
 import {
   type WiseReferenceInput,
   wiseReferenceSchema,
@@ -38,89 +38,95 @@ import {
 
 import { BalanceBreakdown } from './balance-breakdown';
 import { ExportCurrencyTable } from './export-currency-table';
+import { WiseReferenceForm } from './wise-reference-form';
 
 import { type PayrollExportRow } from '@/types/hrm';
 
-type ExportWiseSheetProps = {
+type ExportSheetProps = {
   runId: string;
   periodMonth: string;
   rows: PayrollExportRow[];
   disabled?: boolean;
 };
 
-export function ExportWiseSheet({
+export function ExportSheet({
   runId,
   periodMonth,
   rows,
   disabled,
-}: ExportWiseSheetProps) {
-  const formId = useId();
+}: ExportSheetProps) {
   const [open, setOpen] = useState(false);
+  const [provider, setProvider] = useState<ExportProvider>(
+    DEFAULT_EXPORT_PROVIDER,
+  );
   const selection = useExportCurrencySelection(rows);
   const { includedRows, excludedIds, breakdown } = selection;
+  const providerLabel = EXPORT_PROVIDER_LABELS[provider];
 
   const form = useForm<WiseReferenceInput>({
     resolver: zodResolver(wiseReferenceSchema),
     defaultValues: { paymentReference: defaultWiseReference(periodMonth) },
   });
 
-  const exportAction = useExportWise(() => {
+  const handleExported = () => {
     setOpen(false);
     selection.reset();
-  });
+  };
+  const payoneerExport = useExportPayoneer(handleExported);
+  const wiseExport = useExportWise(handleExported);
 
-  const handleExport = ({ paymentReference }: WiseReferenceInput) =>
-    exportAction.execute({
-      run_id: runId,
-      currencyByEmployee: selection.currencyByEmployee,
-      excludedEmployeeIds: [...excludedIds],
-      paymentReference,
-    });
+  const exportInput = {
+    run_id: runId,
+    currencyByEmployee: selection.currencyByEmployee,
+    excludedEmployeeIds: [...excludedIds],
+  };
+  const handleWiseExport = form.handleSubmit(({ paymentReference }) =>
+    wiseExport.execute({ ...exportInput, paymentReference }),
+  );
+  const handleExport =
+    provider === 'wise'
+      ? handleWiseExport
+      : () => payoneerExport.execute(exportInput);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant='outline' disabled={disabled}>
-          Export for Wise
+        <Button variant='outline' iconLeft={Download} disabled={disabled}>
+          Export
         </Button>
       </SheetTrigger>
       <SheetContent className='flex w-full flex-col gap-4 overflow-y-auto sm:max-w-2xl'>
         <SheetHeader>
-          <SheetTitle>Export for Wise</SheetTitle>
+          <SheetTitle>Export salaries</SheetTitle>
           <SheetDescription>
-            Choose the Wise balance to pay each employee from. The recipient
-            account is always PKR, and the amount is the locked payslip total —
-            what the employee receives, not what Wise debits. Leave anyone out
-            who isn&apos;t being paid through Wise this month — it only affects
-            this file.
+            {EXPORT_PROVIDER_DESCRIPTIONS[provider]} Leave anyone out who
+            isn&apos;t being paid through {providerLabel} this month — it only
+            affects this file.
           </SheetDescription>
         </SheetHeader>
 
-        <Form {...form}>
-          <form id={formId} onSubmit={form.handleSubmit(handleExport)}>
-            <FormField
-              control={form.control}
-              name='paymentReference'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Payment reference</FormLabel>
-                  <FormControl>
-                    <Input maxLength={WISE_REFERENCE_MAX_LENGTH} {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Sent with every transfer in this file.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
+        <Tabs
+          value={provider}
+          onValueChange={(next) => {
+            if (isExportProvider(next)) setProvider(next);
+          }}
+        >
+          <TabsList className='grid w-full grid-cols-2'>
+            {EXPORT_PROVIDERS.map((option) => (
+              <TabsTrigger key={option} value={option}>
+                {EXPORT_PROVIDER_LABELS[option]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value='wise' className='mt-4'>
+            <WiseReferenceForm form={form} onSubmit={handleWiseExport} />
+          </TabsContent>
+        </Tabs>
 
         <ExportCurrencyTable rows={rows} selection={selection} />
 
         {breakdown.length > 0 && (
-          <BalanceBreakdown groups={breakdown} providerLabel='Wise' />
+          <BalanceBreakdown groups={breakdown} providerLabel={providerLabel} />
         )}
 
         <SheetFooter className='mt-auto items-center gap-2 sm:justify-between'>
@@ -134,12 +140,11 @@ export function ExportWiseSheet({
               Cancel
             </Button>
             <Button
-              type='submit'
-              form={formId}
-              isLoading={exportAction.isPending}
+              isLoading={payoneerExport.isPending || wiseExport.isPending}
               disabled={includedRows.length === 0}
+              onClick={handleExport}
             >
-              Export
+              Export for {providerLabel}
             </Button>
           </div>
         </SheetFooter>
