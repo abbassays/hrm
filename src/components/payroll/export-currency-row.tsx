@@ -18,10 +18,10 @@ import { type BalanceCurrency } from '@/constants/payroll-export';
 
 import { CurrencySelect } from './currency-select';
 
-import { type PayoneerExportRow as PayoneerExportRowData } from '@/types/hrm';
+import { type PayrollExportRow } from '@/types/hrm';
 
-type PayoneerExportRowProps = {
-  row: PayoneerExportRowData;
+type ExportCurrencyRowProps = {
+  row: PayrollExportRow;
   currency: BalanceCurrency;
   isSelected: boolean;
   isExcluded: boolean;
@@ -30,7 +30,7 @@ type PayoneerExportRowProps = {
   onCurrencyChange: (employeeId: string, currency: BalanceCurrency) => void;
 };
 
-export function PayoneerExportRow({
+export function ExportCurrencyRow({
   row,
   currency,
   isSelected,
@@ -38,7 +38,7 @@ export function PayoneerExportRow({
   onToggleSelected,
   onToggleExcluded,
   onCurrencyChange,
-}: PayoneerExportRowProps) {
+}: ExportCurrencyRowProps) {
   return (
     <TableRow>
       <TableCell>

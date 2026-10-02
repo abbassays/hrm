@@ -19,17 +19,19 @@ export type BalanceBreakdownGroup = {
   totalPkr: number;
 };
 
-type PayoneerBalanceBreakdownProps = {
+type BalanceBreakdownProps = {
   groups: BalanceBreakdownGroup[];
+  providerLabel: string;
 };
 
-export function PayoneerBalanceBreakdown({
+export function BalanceBreakdown({
   groups,
-}: PayoneerBalanceBreakdownProps) {
+  providerLabel,
+}: BalanceBreakdownProps) {
   const { data, isPending, isError, error } = useFxRates();
 
   useEffect(() => {
-    if (isError) Logger.error('Payoneer breakdown FX lookup failed', error);
+    if (isError) Logger.error('Balance breakdown FX lookup failed', error);
   }, [isError, error]);
 
   return (
@@ -70,7 +72,7 @@ export function PayoneerBalanceBreakdown({
         <p className='mt-2 text-xs text-muted-foreground'>
           {isError
             ? 'Live rates unavailable — showing the PKR totals instead.'
-            : "Estimated at today's rate. Payoneer applies its own rate when the payment is sent."}
+            : `Estimated at today's rate. ${providerLabel} applies its own rate when the payment is sent.`}
         </p>
       )}
     </div>

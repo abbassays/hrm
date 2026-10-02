@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { useExportPayoneer } from '@/hooks/actions/use-export-payoneer';
+import { useExportCurrencySelection } from '@/hooks/use-export-currency-selection';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Sheet,
   SheetContent,
@@ -16,29 +15,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 
-import {
-  BALANCE_CURRENCIES,
-  type BalanceCurrency,
-  DEFAULT_BALANCE_CURRENCY,
-} from '@/constants/payroll-export';
+import { BalanceBreakdown } from './balance-breakdown';
+import { ExportCurrencyTable } from './export-currency-table';
 
-import { CurrencySelect } from './currency-select';
-import { PayoneerBalanceBreakdown } from './payoneer-balance-breakdown';
-import { PayoneerExportRow } from './payoneer-export-row';
-
-import { type PayoneerExportRow as PayoneerExportRowData } from '@/types/hrm';
+import { type PayrollExportRow } from '@/types/hrm';
 
 type ExportPayoneerSheetProps = {
   runId: string;
-  rows: PayoneerExportRowData[];
+  rows: PayrollExportRow[];
   disabled?: boolean;
 };
 
@@ -48,96 +33,20 @@ export function ExportPayoneerSheet({
   disabled,
 }: ExportPayoneerSheetProps) {
   const [open, setOpen] = useState(false);
-  const [currencies, setCurrencies] = useState<Record<string, BalanceCurrency>>(
-    {},
-  );
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
-  const [bulkCurrency, setBulkCurrency] = useState<BalanceCurrency>(
-    DEFAULT_BALANCE_CURRENCY,
-  );
+  const selection = useExportCurrencySelection(rows);
+  const { includedRows, excludedIds, breakdown } = selection;
 
   const exportAction = useExportPayoneer(() => {
     setOpen(false);
-    setSelectedIds(new Set());
-    setExcludedIds(new Set());
+    selection.reset();
   });
 
-  const currencyFor = (employeeId: string) =>
-    currencies[employeeId] ?? DEFAULT_BALANCE_CURRENCY;
-
-  const toggleExcluded = (employeeId: string) =>
-    setExcludedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(employeeId)) next.delete(employeeId);
-      else next.add(employeeId);
-      return next;
-    });
-
-  const toggleRow = (employeeId: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(employeeId)) next.delete(employeeId);
-      else next.add(employeeId);
-      return next;
-    });
-  };
-
-  const toggleAll = () => {
-    setSelectedIds((prev) =>
-      prev.size === rows.length
-        ? new Set()
-        : new Set(rows.map((row) => row.employeeId)),
-    );
-  };
-
-  const setCurrencyFor = (employeeId: string, currency: BalanceCurrency) =>
-    setCurrencies((prev) => ({ ...prev, [employeeId]: currency }));
-
-  const applyBulkCurrency = () => {
-    setCurrencies((prev) => {
-      const next = { ...prev };
-      selectedIds.forEach((employeeId) => {
-        next[employeeId] = bulkCurrency;
-      });
-      return next;
-    });
-    toast.success(
-      `Set ${bulkCurrency} for ${selectedIds.size} ${
-        selectedIds.size === 1 ? 'employee' : 'employees'
-      }`,
-    );
-  };
-
-  const includedRows = rows.filter((row) => !excludedIds.has(row.employeeId));
-
-  // Group by source balance: how many employees each balance pays, and the
-  // total PKR those employees receive. The card converts each total into its
-  // own currency for display. Excluded people aren't paid from any balance in
-  // this file, so they're out of the breakdown too.
-  const breakdown = BALANCE_CURRENCIES.map((currency) => {
-    const inCurrency = includedRows.filter(
-      (row) => currencyFor(row.employeeId) === currency,
-    );
-    return {
-      currency,
-      count: inCurrency.length,
-      totalPkr: inCurrency.reduce((sum, row) => sum + row.total, 0),
-    };
-  }).filter((group) => group.count > 0);
-
-  const handleExport = () => {
-    const currencyByEmployee = Object.fromEntries(
-      rows.map((row) => [row.employeeId, currencyFor(row.employeeId)]),
-    );
+  const handleExport = () =>
     exportAction.execute({
       run_id: runId,
-      currencyByEmployee,
+      currencyByEmployee: selection.currencyByEmployee,
       excludedEmployeeIds: [...excludedIds],
     });
-  };
-
-  const allSelected = rows.length > 0 && selectedIds.size === rows.length;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -157,58 +66,10 @@ export function ExportPayoneerSheet({
           </SheetDescription>
         </SheetHeader>
 
-        {selectedIds.size > 0 && (
-          <div className='flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2'>
-            <span className='text-sm text-muted-foreground'>
-              {selectedIds.size} selected
-            </span>
-            <CurrencySelect
-              value={bulkCurrency}
-              onValueChange={setBulkCurrency}
-              triggerClassName='h-8 w-28'
-            />
-            <Button type='button' size='sm' onClick={applyBulkCurrency}>
-              Apply to selected
-            </Button>
-          </div>
-        )}
-
-        <div className='rounded-lg border border-border'>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className='w-10'>
-                  <Checkbox
-                    checked={allSelected}
-                    onCheckedChange={toggleAll}
-                    aria-label='Select all rows'
-                  />
-                </TableHead>
-                <TableHead>Employee</TableHead>
-                <TableHead className='text-center'>Amount (PKR)</TableHead>
-                <TableHead className='text-center'>Pay from</TableHead>
-                <TableHead className='w-16 text-center'>In file</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <PayoneerExportRow
-                  key={row.employeeId}
-                  row={row}
-                  currency={currencyFor(row.employeeId)}
-                  isSelected={selectedIds.has(row.employeeId)}
-                  isExcluded={excludedIds.has(row.employeeId)}
-                  onToggleSelected={toggleRow}
-                  onToggleExcluded={toggleExcluded}
-                  onCurrencyChange={setCurrencyFor}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ExportCurrencyTable rows={rows} selection={selection} />
 
         {breakdown.length > 0 && (
-          <PayoneerBalanceBreakdown groups={breakdown} />
+          <BalanceBreakdown groups={breakdown} providerLabel='Payoneer' />
         )}
 
         <SheetFooter className='mt-auto items-center gap-2 sm:justify-between'>

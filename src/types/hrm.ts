@@ -312,7 +312,7 @@ export type Notification = {
   createdAt: string;
 };
 
-export type PayoneerExportRow = {
+export type PayrollExportRow = {
   employeeId: string;
   employeeName: string;
   total: number;

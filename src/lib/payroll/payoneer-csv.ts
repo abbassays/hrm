@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { exportFileName } from './csv';
 
 export const PAYONEER_HEADER = [
   'Bank Account Holder Name',
@@ -11,17 +11,5 @@ export const PAYONEER_HEADER = [
   'Transaction Description (Optional)',
 ] as const;
 
-export const PAYONEER_CSV_MIME = 'text/csv';
-
-const csvField = (value: string | number) => {
-  const text = String(value);
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
-
-export const toCsv = (rows: readonly (readonly (string | number)[])[]) =>
-  rows.map((row) => row.map(csvField).join(',')).join('\r\n');
-
-export const payoneerFileName = (periodMonth: string, copyNumber = 0) => {
-  const month = format(periodMonth, 'MMM-yyyy').toLowerCase();
-  return `salaries-${month}${copyNumber ? `(${copyNumber})` : ''}.csv`;
-};
+export const payoneerFileName = (periodMonth: string, copyNumber = 0) =>
+  exportFileName('salaries', periodMonth, copyNumber);

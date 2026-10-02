@@ -1,11 +1,7 @@
 'use server';
 
-import {
-  PAYONEER_CSV_MIME,
-  PAYONEER_HEADER,
-  payoneerFileName,
-  toCsv,
-} from '@/lib/payroll/payoneer-csv';
+import { CSV_MIME, toCsv } from '@/lib/payroll/csv';
+import { PAYONEER_HEADER, payoneerFileName } from '@/lib/payroll/payoneer-csv';
 import { authActionClient } from '@/lib/server/safe-action';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
@@ -141,7 +137,7 @@ export const exportPayoneer = authActionClient
     const { error: uploadError } = await supabaseAdmin.storage
       .from(EXPORTS_BUCKET)
       .upload(filePath, Buffer.from(csv, 'utf8'), {
-        contentType: PAYONEER_CSV_MIME,
+        contentType: CSV_MIME,
         upsert: false,
       });
     if (uploadError) throw new Error(uploadError.message);
