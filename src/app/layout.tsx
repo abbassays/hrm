@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Mulish } from 'next/font/google';
+import localFont from 'next/font/local';
 import { Toaster } from 'sonner';
 
 import './globals.css';
@@ -10,22 +10,24 @@ import getMetadata from '@/config/app';
 
 import AppProviders from './providers';
 
-const geistSans = Geist({
+// Self-hosted: next/font/google breaks intermittently (vercel/next.js#99114).
+const geistSans = localFont({
+  src: './fonts/Geist-Variable.woff2',
   variable: '--font-geist-sans',
-  subsets: ['latin'],
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  weight: '100 900',
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: './fonts/GeistMono-Variable.woff2',
   variable: '--font-geist-mono',
-  subsets: ['latin'],
+  weight: '100 900',
 });
 
 // Bitsmiths brand body font (from company web).
-const mulish = Mulish({
+const mulish = localFont({
+  src: './fonts/Mulish-Variable.woff2',
   variable: '--font-mulish',
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  weight: '200 1000',
 });
 
 export const metadata: Metadata = getMetadata();
