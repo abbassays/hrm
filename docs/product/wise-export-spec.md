@@ -176,8 +176,9 @@ What the Wise sheet has that the Payoneer one doesn't:
 **`export-artifacts.tsx`** — the list header is hardcoded to "Payoneer exports".
 Change it to "Exports" and put a provider `Badge` on each row. `useRunExports` in
 `src/hooks/queries/payroll-exports.ts` must select the new `provider` column. The
-header carries All / Wise / Payoneer filter tabs with counts, and the list shows the
-newest three until "Show all" expands it into a scrolling area.
+header carries All / Wise / Payoneer filter tabs with counts, a date-range picker and
+a newest/oldest sort toggle. The list shows three rows until "Show all" expands it
+into a scrolling area.
 
 **`use-export-wise.ts`** in `src/hooks/actions/`, mirroring `use-export-payoneer.ts`.
 

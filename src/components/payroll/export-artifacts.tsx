@@ -1,6 +1,8 @@
 'use client';
 
+import { endOfDay, isWithinInterval, startOfDay } from 'date-fns';
 import { useState } from 'react';
+import { type DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
 
 import {
@@ -10,19 +12,14 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { cn } from '@/lib/utils';
 import { downloadUrl } from '@/utils/download-functions';
 
-import {
-  EXPORT_PROVIDER_LABELS,
-  EXPORT_PROVIDERS,
-  type ExportProvider,
-  isExportProvider,
-} from '@/constants/payroll-export';
+import { type ExportProviderFilter } from '@/constants/payroll-export';
 
 import { ExportArtifactRow } from './export-artifact-row';
+import { ExportArtifactsToolbar } from './export-artifacts-toolbar';
 
 const PREVIEW_COUNT = 3;
 
@@ -31,7 +28,9 @@ type ExportArtifactsProps = { runId: string };
 export function ExportArtifacts({ runId }: ExportArtifactsProps) {
   const { data: exports, isLoading } = useRunExports(runId);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [provider, setProvider] = useState<'all' | ExportProvider>('all');
+  const [provider, setProvider] = useState<ExportProviderFilter>('all');
+  const [dateRange, setDateRange] = useState<DateRange>();
+  const [newestFirst, setNewestFirst] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
   const handleDownload = async (id: string, filePath: string) => {
@@ -51,11 +50,22 @@ export function ExportArtifacts({ runId }: ExportArtifactsProps) {
   if (isLoading) return <Skeleton className='h-16 rounded-lg' />;
   if (!exports?.length) return null;
 
+  const from = dateRange?.from;
+  const inDateRange = from
+    ? exports.filter((item) =>
+        isWithinInterval(item.exportedAt, {
+          start: startOfDay(from),
+          end: endOfDay(dateRange.to ?? from),
+        }),
+      )
+    : exports;
   const filtered =
     provider === 'all'
-      ? exports
-      : exports.filter((item) => item.provider === provider);
-  const visible = expanded ? filtered : filtered.slice(0, PREVIEW_COUNT);
+      ? inDateRange
+      : inDateRange.filter((item) => item.provider === provider);
+  // The query returns newest first.
+  const ordered = newestFirst ? filtered : [...filtered].reverse();
+  const visible = expanded ? ordered : ordered.slice(0, PREVIEW_COUNT);
 
   return (
     <div className='rounded-lg border border-border'>
@@ -63,33 +73,20 @@ export function ExportArtifacts({ runId }: ExportArtifactsProps) {
         <p className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
           Exports
         </p>
-        <Tabs
-          value={provider}
-          onValueChange={(value) => {
-            if (value === 'all' || isExportProvider(value)) setProvider(value);
-          }}
-        >
-          <TabsList className='h-8'>
-            <TabsTrigger value='all' className='px-2.5 py-1 text-xs'>
-              All ({exports.length})
-            </TabsTrigger>
-            {EXPORT_PROVIDERS.map((option) => (
-              <TabsTrigger
-                key={option}
-                value={option}
-                className='px-2.5 py-1 text-xs'
-              >
-                {EXPORT_PROVIDER_LABELS[option]} (
-                {exports.filter((item) => item.provider === option).length})
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <ExportArtifactsToolbar
+          exports={inDateRange}
+          provider={provider}
+          onProviderChange={setProvider}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          newestFirst={newestFirst}
+          onToggleSort={() => setNewestFirst((prev) => !prev)}
+        />
       </div>
 
-      {filtered.length === 0 ? (
+      {ordered.length === 0 ? (
         <p className='px-4 py-6 text-center text-sm text-muted-foreground'>
-          No exports for this provider yet.
+          No exports match these filters.
         </p>
       ) : (
         <ul
@@ -109,7 +106,7 @@ export function ExportArtifacts({ runId }: ExportArtifactsProps) {
         </ul>
       )}
 
-      {filtered.length > PREVIEW_COUNT && (
+      {ordered.length > PREVIEW_COUNT && (
         <div className='border-t border-border p-1'>
           <Button
             variant='ghost'
@@ -117,7 +114,7 @@ export function ExportArtifacts({ runId }: ExportArtifactsProps) {
             className='w-full text-muted-foreground'
             onClick={() => setExpanded((prev) => !prev)}
           >
-            {expanded ? 'Show fewer' : `Show all ${filtered.length}`}
+            {expanded ? 'Show fewer' : `Show all ${ordered.length}`}
           </Button>
         </div>
       )}

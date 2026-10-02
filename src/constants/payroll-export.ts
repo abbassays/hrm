@@ -11,6 +11,8 @@ export const EXPORT_PROVIDERS = ['wise', 'payoneer'] as const;
 
 export type ExportProvider = (typeof EXPORT_PROVIDERS)[number];
 
+export type ExportProviderFilter = 'all' | ExportProvider;
+
 export const EXPORT_PROVIDER_LABELS: Record<ExportProvider, string> = {
   wise: 'Wise',
   payoneer: 'Payoneer',
