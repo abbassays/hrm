@@ -28,10 +28,12 @@ import { adminNav, employeeNav } from '@/constants/hrm-nav';
 import { paths } from '@/constants/paths';
 
 import { SignOutButton } from './sign-out-button';
+import { StopImpersonationMenuButton } from './stop-impersonation-menu-button';
 import { UserCard } from './user-card';
 
 type AppSidebarProps = {
   role: 'employee' | 'admin';
+  impersonating?: boolean;
 };
 
 const exactMatchHrefs: string[] = [
@@ -39,7 +41,7 @@ const exactMatchHrefs: string[] = [
   paths.admin.dashboard,
 ];
 
-export function AppSidebar({ role }: AppSidebarProps) {
+export function AppSidebar({ role, impersonating = false }: AppSidebarProps) {
   const config = role === 'admin' ? adminNav : employeeNav;
   const pathname = usePathname();
   const unacknowledgedPolicies = useUnacknowledgedPolicyCount();
@@ -111,7 +113,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
       </SidebarContent>
       <SidebarFooter>
         <UserCard />
-        <SignOutButton />
+        {impersonating ? <StopImpersonationMenuButton /> : <SignOutButton />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

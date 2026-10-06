@@ -52,6 +52,37 @@ export const authActionClient = safeActionClient.use(async ({ next }) => {
 
 Use `authActionClient` for authenticated operations; for public server actions use `safeActionClient` directly.
 
+### Admin impersonation ("View as employee")
+
+Nearly all reads happen in the browser under RLS, so impersonation is a real
+session swap rather than an app-level flag. `src/actions/impersonation.ts`:
+
+- `startImpersonation`: admin-only. Any account except a disabled one (disabling
+  bans the auth user, so no session can be minted). Mints a one-time
+  `magiclink` with the service role, consumes it with `verifyOtp` on the
+  cookie-backed server client so the browser now holds the target's session,
+  revokes the admin's old session (`auth.admin.signOut(token, 'local')`) and
+  sets the httpOnly `hrm_impersonation` cookie.
+- The cookie carries `{ adminId, targetId, startedAt }` as base64url JSON plus
+  an HMAC-SHA256 signature keyed by the service-role key
+  (`src/lib/server/impersonation.ts`). No table is involved; a tampered cookie
+  fails the signature check and is treated as absent.
+- `stopImpersonation`: valid only while the signed-in user is the cookie's
+  `targetId`. Re-checks the admin is still an active admin, swaps back the
+  same way, revokes the borrowed session and clears the cookie.
+- `signOut` while impersonating signs out with `scope: 'local'`, so only the
+  borrowed session is revoked, never the person's own devices.
+- Middleware needs no special case: the browser holds a real session for the
+  target, so the role/status funnel routes exactly as it would for that person
+  (employee app, onboarding gate, or admin app when the target is an admin).
+- The employee, admin and onboarding layouts call `getCurrentImpersonation()`
+  once per request. It returns a session only when the cookie's target matches
+  the signed-in user (a stale cookie after a normal re-login is inert) and feeds the
+  `ImpersonationBanner` above the header and the sidebar footer, which swaps
+  Sign out for Stop impersonating.
+- The client does a full page load after either switch so React Query, the
+  browser Supabase client and PostHog restart with the new identity.
+
 ### RLS and service role
 
 - Keep RLS enabled by default.

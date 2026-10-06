@@ -1,6 +1,10 @@
 'use server';
 
 import { sendPasswordResetEmail } from '@/lib/resend/send-password-reset-email';
+import {
+  clearImpersonationCookie,
+  getActiveImpersonation,
+} from '@/lib/server/impersonation';
 import { authActionClient, safeActionClient } from '@/lib/server/safe-action';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -98,7 +102,18 @@ export const updatePassword = authActionClient
   });
 
 export const signOut = authActionClient.action(
-  async ({ ctx: { supabase } }) => {
+  async ({ ctx: { supabase, authUser } }) => {
+    const userId = authUser.user?.id;
+    const active = userId ? await getActiveImpersonation(userId) : null;
+    if (active) {
+      // A borrowed session must not log the real person out of their own
+      // devices, so revoke only this one.
+      await Promise.all([
+        clearImpersonationCookie(),
+        supabase.auth.signOut({ scope: 'local' }),
+      ]);
+      return;
+    }
     await supabase.auth.signOut();
   },
 );

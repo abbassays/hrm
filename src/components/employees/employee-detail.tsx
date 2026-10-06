@@ -28,6 +28,7 @@ import { EmployeeMedicalTab } from './employee-medical-tab';
 import { EmployeeOvertimeTab } from './employee-overtime-tab';
 import { EmployeePayrollTab } from './employee-payroll-tab';
 import { EmploymentConfigForm } from './employment-config-form';
+import { ImpersonateEmployeeButton } from './impersonate-employee-button';
 
 type EmployeeDetailProps = {
   employeeId: string;
@@ -78,6 +79,12 @@ export function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
       >
         <div className='flex items-center gap-3'>
           <StatusBadge status={employee.status} />
+          {employee.status !== 'disabled' && (
+            <ImpersonateEmployeeButton
+              employeeId={employee.id}
+              employeeName={employee.fullName || employee.email}
+            />
+          )}
         </div>
       </PageHeader>
 

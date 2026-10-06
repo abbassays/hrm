@@ -1,5 +1,6 @@
 import { ModeToggle } from '@/components/common/mode-toggle';
 import { NotetakerWidget } from '@/components/fireflies/notetaker-widget';
+import { ImpersonationBanner } from '@/components/impersonation/impersonation-banner';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { NotificationBell } from '@/components/notifications/notification-bell';
 import {
@@ -8,13 +9,18 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 
-export default function EmployeeLayout({
+import { getCurrentImpersonation } from '@/lib/server/impersonation';
+
+export default async function EmployeeLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const impersonation = await getCurrentImpersonation();
+
   return (
     <SidebarProvider>
-      <AppSidebar role='employee' />
+      <AppSidebar role='employee' impersonating={!!impersonation} />
       <SidebarInset>
+        <ImpersonationBanner session={impersonation} />
         <header className='flex h-14 shrink-0 items-center gap-2 border-b border-border px-4'>
           <SidebarTrigger />
           <div className='ml-auto flex items-center gap-2'>

@@ -6,6 +6,7 @@ import {
   MoreHorizontal,
   RotateCcw,
   Send,
+  UserCog,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -26,6 +27,7 @@ import { paths } from '@/constants/paths';
 
 import { CancelInviteDialog } from './cancel-invite-dialog';
 import { EmployeeAccessDialog } from './delete-employee-dialog';
+import { ImpersonateEmployeeDialog } from './impersonate-employee-dialog';
 
 import { EmployeeListItem } from '@/types/hrm';
 
@@ -38,9 +40,11 @@ export function EmployeesTableRowActions({
 }: EmployeesTableRowActionsProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
+  const [impersonateOpen, setImpersonateOpen] = useState(false);
   const label = employee.fullName || employee.email;
   const isInvited = employee.status === 'invited';
   const isDisabled = employee.status === 'disabled';
+  const canImpersonate = !isDisabled;
 
   const resend = useResendInvite(() =>
     toast.success(`Invitation resent to ${employee.email}`),
@@ -65,6 +69,12 @@ export function EmployeesTableRowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' className='w-48'>
+          {canImpersonate && (
+            <DropdownMenuItem onSelect={() => setImpersonateOpen(true)}>
+              <UserCog />
+              Impersonate
+            </DropdownMenuItem>
+          )}
           {isInvited && (
             <>
               <DropdownMenuItem
@@ -110,6 +120,14 @@ export function EmployeesTableRowActions({
         open={accessOpen}
         onOpenChange={setAccessOpen}
       />
+      {canImpersonate && (
+        <ImpersonateEmployeeDialog
+          employeeId={employee.id}
+          employeeName={label}
+          open={impersonateOpen}
+          onOpenChange={setImpersonateOpen}
+        />
+      )}
     </div>
   );
 }
